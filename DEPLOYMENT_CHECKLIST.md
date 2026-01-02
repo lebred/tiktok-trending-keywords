@@ -6,7 +6,7 @@ Use this checklist to ensure all deployment steps are completed.
 
 ### Environment Setup
 
-- [ ] DigitalOcean account created
+- [x] DigitalOcean account created
 - [ ] Domain name registered (optional)
 - [ ] Stripe account set up with API keys
 - [ ] SMTP service configured (Gmail, SendGrid, etc.)
