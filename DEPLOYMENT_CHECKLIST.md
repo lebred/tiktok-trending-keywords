@@ -94,7 +94,7 @@ Use this checklist to ensure all deployment steps are completed.
 - [ ] Create product and price in Stripe dashboard
 - [ ] Note price ID for STRIPE_PRICE_ID
 - [ ] Configure webhook endpoint:
-  - [ ] URL: `https://your-domain.com/api/stripe/webhook`
+  - [ ] URL: `https://trendearly.xyz/api/stripe/webhook`
   - [ ] Events: checkout.session.completed, customer.subscription.\*
 - [ ] Copy webhook signing secret
 - [ ] Test webhook with Stripe CLI

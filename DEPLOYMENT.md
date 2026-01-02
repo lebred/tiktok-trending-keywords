@@ -16,7 +16,7 @@ Complete guide for deploying TikTok Keyword Momentum Tracker to DigitalOcean.
 ## Prerequisites
 
 - DigitalOcean account
-- Domain name (optional but recommended)
+- Domain name: **trendearly.xyz**
 - Stripe account with API keys
 - SMTP service (Gmail, SendGrid, etc.) for magic links
 - GitHub repository (private)
@@ -201,7 +201,7 @@ openssl rand -hex 32
 Set these in App Platform for the frontend component:
 
 ```bash
-NEXT_PUBLIC_API_URL=https://your-backend-domain.com
+NEXT_PUBLIC_API_URL=https://trendearly.xyz
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 ```
 
@@ -314,7 +314,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
    ```nginx
    server {
        listen 80;
-       server_name your-domain.com;
+       server_name trendearly.xyz;
 
        location / {
            proxy_pass http://127.0.0.1:8000;
@@ -449,7 +449,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
    ```nginx
    server {
        listen 80;
-       server_name your-domain.com;
+       server_name trendearly.xyz;
 
        location / {
            proxy_pass http://127.0.0.1:8000;
@@ -506,7 +506,7 @@ Update Nginx to serve both:
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com;
+    server_name trendearly.xyz;
 
     # Frontend
     location / {
@@ -586,7 +586,7 @@ Or keep the APScheduler running in the background service.
 
    - Go to Stripe Dashboard → Developers → Webhooks
    - Click "Add endpoint"
-   - **Endpoint URL**: `https://your-backend-domain.com/api/stripe/webhook`
+   - **Endpoint URL**: `https://trendearly.xyz/api/stripe/webhook`
    - **Events to send**: Select:
      - `checkout.session.completed`
      - `customer.subscription.updated`
@@ -613,7 +613,7 @@ SSL is automatically handled by App Platform.
 sudo apt install certbot python3-certbot-nginx -y
 
 # Get certificate
-sudo certbot --nginx -d your-domain.com
+sudo certbot --nginx -d trendearly.xyz
 
 # Auto-renewal is set up automatically
 ```

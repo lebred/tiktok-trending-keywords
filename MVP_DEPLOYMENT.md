@@ -2,6 +2,8 @@
 
 **Fast, cheap deployment for MVP launch.**
 
+**Domain**: `trendearly.xyz`
+
 ## Why SQLite for MVP?
 
 - ✅ **Zero database costs** - No $15/month PostgreSQL bill
@@ -91,7 +93,7 @@ STRIPE_PRICE_ID=price_...
 # App
 APP_NAME=TikTok Keyword Momentum Tracker
 DEBUG=False
-FRONTEND_URL=https://your-domain.com
+FRONTEND_URL=https://trendearly.xyz
 ```
 
 ### 4. Initialize Database
@@ -173,7 +175,7 @@ sudo nano /etc/nginx/sites-available/tiktok-tracker
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com;
+    server_name trendearly.xyz;
 
     # Frontend
     location / {
@@ -205,7 +207,7 @@ sudo systemctl reload nginx
 
 ```bash
 sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d your-domain.com
+sudo certbot --nginx -d trendearly.xyz
 ```
 
 ### 8. Set Up Daily Backups
