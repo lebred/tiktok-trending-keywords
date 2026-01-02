@@ -10,7 +10,7 @@
 - ✅ **Easy backups** - Just copy the file
 - ✅ **Easy migration** - Can move to PostgreSQL later without code changes
 
-**Total Cost: ~$17/month** (Droplet $12 + Spaces $5 for backups)
+**Total Cost: ~$17-20/month** (Droplet ~$12 + Spaces ~$5 minimum, varies by usage)
 
 ## Quick Deployment Steps
 
@@ -68,6 +68,7 @@ nano .env
 ```
 
 **Minimum .env configuration:**
+
 ```bash
 # Database - SQLite (no setup needed!)
 DATABASE_URL=sqlite:////var/lib/tiktok-tracker/data.db
@@ -106,6 +107,7 @@ ls -lh /var/lib/tiktok-tracker/data.db
 ### 5. Create Systemd Services
 
 **Backend service:**
+
 ```bash
 sudo nano /etc/systemd/system/tiktok-backend.service
 ```
@@ -128,6 +130,7 @@ WantedBy=multi-user.target
 ```
 
 **Frontend service:**
+
 ```bash
 sudo nano /etc/systemd/system/tiktok-frontend.service
 ```
@@ -150,6 +153,7 @@ WantedBy=multi-user.target
 ```
 
 **Start services:**
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable tiktok-backend tiktok-frontend
@@ -207,6 +211,7 @@ sudo certbot --nginx -d your-domain.com
 ### 8. Set Up Daily Backups
 
 **Create DigitalOcean Spaces bucket:**
+
 1. Go to DigitalOcean → Spaces
 2. Create bucket
 3. Generate access keys
@@ -219,6 +224,7 @@ sudo certbot --nginx -d your-domain.com
    ```
 
 **Install backup dependency:**
+
 ```bash
 cd backend
 source venv/bin/activate
@@ -226,6 +232,7 @@ pip install boto3
 ```
 
 **Set up cron job:**
+
 ```bash
 crontab -e
 # Add this line (backup daily at 3 AM):
@@ -282,12 +289,14 @@ sudo systemctl restart tiktok-backend
 ## When to Migrate to PostgreSQL
 
 Migrate when you need:
+
 - Multiple app instances (horizontal scaling)
 - High write concurrency
 - Advanced database features
 - Better performance at scale
 
 **Migration is easy:**
+
 ```bash
 python -m scripts.migrate_from_sqlite_to_postgres \
   sqlite:////var/lib/tiktok-tracker/data.db \
@@ -296,31 +305,41 @@ python -m scripts.migrate_from_sqlite_to_postgres \
 
 ## Cost Breakdown
 
-- **Droplet (2GB)**: $12/month
-- **Spaces (backups)**: $5/month
-- **Total**: **$17/month** ✅
+- **Droplet (2GB)**: ~$12/month (varies by region/plan)
+- **Spaces (backups)**: ~$5/month minimum (depends on storage/egress)
+- **Total**: **~$17-20/month** ✅ (typical)
 
 Compare to production setup:
-- App Platform: $12/month
-- Managed PostgreSQL: $15/month
-- **Total**: $27/month minimum
 
-**Savings: $10/month = $120/year**
+- App Platform: ~$12/month
+- Managed PostgreSQL: ~$15/month minimum
+- **Total**: ~$27/month minimum
+
+**Savings: ~$7-10/month = ~$84-120/year** (typical)
 
 ## Troubleshooting
 
 **Database locked error:**
+
 - SQLite doesn't handle concurrent writes well
 - This is fine for MVP (single server, daily batch processing)
+- Ensure backups run after daily pipeline (when writes are done)
 - Migrate to PostgreSQL if you see this frequently
 
+**Backup corruption:**
+
+- The backup script uses SQLite's online backup API (safe during writes)
+- If you see corruption, ensure WAL checkpoint completes
+- Consider running backups right after daily pipeline completes
+
 **Backup failed:**
+
 - Check Spaces credentials
 - Verify bucket exists
 - Check file permissions
 
 **Service won't start:**
+
 - Check logs: `sudo journalctl -u tiktok-backend -n 50`
 - Verify .env file exists and is readable
 - Check database file permissions
-

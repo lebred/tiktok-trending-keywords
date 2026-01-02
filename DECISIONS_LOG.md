@@ -204,12 +204,14 @@
 **Date**: [Current Date]
 **Context**: Reducing deployment costs and complexity for MVP launch
 **Decision**:
+
 - Use SQLite as default database for MVP
 - Support both SQLite and PostgreSQL (switch via DATABASE_URL)
 - Simple daily backups to DigitalOcean Spaces
 - Provide migration script for PostgreSQL when needed
 
 **Rationale**:
+
 - Zero database costs ($0 vs $15/month for managed PostgreSQL)
 - Perfect for single-server deployment (MVP scale)
 - No connection management complexity
@@ -219,19 +221,38 @@
 - Saves $120/year during MVP phase
 
 **Alternatives Considered**:
+
 - Start with PostgreSQL (rejected - unnecessary cost for MVP)
 - Use Supabase/Neon free tier (rejected - adds complexity, may hit limits)
 - Use managed PostgreSQL from day one (rejected - premature optimization)
 
 **Trade-offs**:
+
 - SQLite doesn't handle concurrent writes well (acceptable - single server, daily batch)
 - No advanced features (acceptable - not needed for MVP)
 - Migration required later (acceptable - script provided, easy process)
 
 **Migration Strategy**:
+
 - Script provided: `migrate_from_sqlite_to_postgres.py`
 - Zero-downtime migration possible
 - All data preserved
-- No code changes required
+- No schema changes needed (using portable types)
+
+**Implementation Details**:
+
+- SQLite engine uses StaticPool for single-file databases
+- Foreign keys enabled via PRAGMA on every connection
+- Backup uses SQLite online backup API (safe during writes)
+- WAL checkpoint before backup for consistency
+- Backup verification included
+- All schema types are portable (Integer, String, Float, Date, DateTime, JSON)
+- No database-specific features used (UUID functions, JSONB, etc.)
+
+**Documentation**:
+
+- Created `DATABASE_PORTABILITY.md` to track portability requirements
+- Updated deployment docs with accurate cost estimates
+- Clarified "no code changes" to "no schema changes" (more accurate)
 
 ---

@@ -69,8 +69,8 @@ Cost: ~$72/month
 - ✅ Zero database costs
 - ✅ No connection management
 - ✅ Perfect for single-server deployment
-- ✅ Easy backups (just copy the file)
-- ✅ Can migrate to PostgreSQL later without code changes
+- ✅ Safe backups using SQLite online backup API
+- ✅ Can migrate to PostgreSQL later without schema changes (using portable types)
 
 **When to migrate to PostgreSQL:**
 
@@ -778,9 +778,9 @@ psql $DATABASE_URL
 
 ### MVP Setup (Recommended for Launch)
 
-- **Droplet (2GB)**: $12/month
-- **DigitalOcean Spaces** (for backups): $5/month
-- **Total: ~$17/month** ✅
+- **Droplet (2GB)**: ~$12/month (varies by region)
+- **DigitalOcean Spaces** (for backups): ~$5/month minimum (depends on storage/egress)
+- **Total: ~$17-20/month** ✅ (typical cost)
 
 ### Production Setup (After Traction)
 
