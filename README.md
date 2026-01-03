@@ -85,7 +85,7 @@ npm run dev
 
 ## Deployment
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide to DigitalOcean.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide to DigitalOcean (includes both MVP and Production setups).
 
 ## Documentation
 

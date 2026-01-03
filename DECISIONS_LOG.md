@@ -533,3 +533,45 @@
 - Can be used for monitoring/alerting
 
 ---
+
+### Decision: Consolidate Deployment Documentation
+
+**Date**: [Current Date]
+**Context**: Two deployment guides (DEPLOYMENT.md and MVP_DEPLOYMENT.md) with significant overlap causing maintenance burden and confusion
+**Decision**:
+- Consolidate both files into a single DEPLOYMENT.md
+- Structure with "Quick Start: MVP" at top for fast deployment
+- Include comprehensive sections for both MVP and Production
+- Delete MVP_DEPLOYMENT.md after consolidation
+
+**Rationale**:
+- **Single Source of Truth**: Eliminates confusion about which guide to follow
+- **Reduced Maintenance**: Updates only needed in one place
+- **Better Organization**: Clear structure with Quick Start for MVP users
+- **Complete Coverage**: All information preserved, nothing lost
+- **Easier Navigation**: One comprehensive guide with clear sections
+
+**Structure**:
+- Quick Start: MVP section at top (streamlined, fast path)
+- Detailed MVP Deployment Steps (complete instructions)
+- Production Deployment section (App Platform + PostgreSQL)
+- Shared sections (Environment Variables, Stripe, Monitoring, etc.)
+- Public Pages section fully integrated
+- All troubleshooting and maintenance preserved
+
+**Alternatives Considered**:
+- Keep both files with cross-references (rejected - still causes confusion)
+- Make MVP_DEPLOYMENT.md a short "Quick Start" linking to DEPLOYMENT.md (rejected - adds complexity)
+- Split by deployment method instead (rejected - MVP vs Production is clearer distinction)
+
+**Trade-offs**:
+- **Longer File**: Single file is longer (~900 lines) but well-organized (acceptable)
+- **Quick Start**: MVP users can skip to Quick Start section (good UX)
+- **Completeness**: All information preserved, nothing lost (good)
+
+**Migration**:
+- Updated all references in documentation
+- Deleted MVP_DEPLOYMENT.md
+- Verified all content preserved in consolidated file
+
+---

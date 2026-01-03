@@ -52,7 +52,7 @@ This document summarizes the safety improvements made to the SQLite implementati
 - Added notes about Spaces pricing (depends on storage/egress)
 - Softened language: "typical cost" instead of exact amounts
 
-**Files**: `DEPLOYMENT.md`, `MVP_DEPLOYMENT.md`
+**Files**: `DEPLOYMENT.md`
 
 ### 5. ✅ Migration Documentation
 

@@ -2,14 +2,29 @@
 
 Complete guide for deploying TikTok Keyword Momentum Tracker to DigitalOcean.
 
+**Domain**: `trendearly.xyz`
+
 ## 🚀 Quick Start: MVP Deployment
 
-**For fastest, cheapest deployment, see [MVP_DEPLOYMENT.md](./MVP_DEPLOYMENT.md)**
+**Fastest, cheapest deployment for MVP launch.**
 
-- Single Droplet + SQLite = **$17/month**
+- Single Droplet + SQLite = **~$17-20/month**
 - No database setup needed
 - Simple daily backups
 - Easy migration to PostgreSQL later
+
+### Quick Steps
+
+1. **Create Droplet** (Ubuntu 22.04, 2GB RAM, $12/month)
+2. **Initial Setup**: Install Python 3.11, Node.js 18, Nginx
+3. **Deploy App**: Clone repo, setup backend/frontend, configure .env
+4. **Database**: Run migrations (SQLite auto-created)
+5. **Services**: Create systemd services for backend
+6. **Nginx**: Use config from `deploy/nginx/trendearly.xyz.conf`
+7. **SSL**: Run certbot
+8. **Backups**: Setup cron job for daily backups to Spaces
+
+**See [Detailed MVP Steps](#mvp-deployment-steps) below for complete instructions.**
 
 ---
 
@@ -34,7 +49,7 @@ Complete guide for deploying TikTok Keyword Momentum Tracker to DigitalOcean.
 │  │  ($12/mo) │  │  Simple daily backups to Spaces
 │  └───────────┘  │
 └─────────────────┘
-Cost: ~$12/month + Spaces ($5/month) = $17/month
+Cost: ~$12/month + Spaces ($5/month) = $17-20/month
 ```
 
 ### Production Setup (After Traction)
@@ -79,105 +94,75 @@ Cost: ~$72/month
 - Need advanced features (full-text search, etc.)
 - Scaling beyond single server
 
-## Step 1: Database Setup
+## MVP Deployment Steps
 
-### Option A: SQLite (MVP - Recommended)
+### Step 1: Create DigitalOcean Droplet
 
-**No setup needed!** SQLite is built into Python.
+1. Create Ubuntu 22.04 Droplet
+2. **Size**: 2GB RAM, 1 vCPU ($12/month) - sufficient for MVP
+3. Choose your region
+4. Add SSH key
 
-1. **Set Environment Variable:**
-
-   ```bash
-   DATABASE_URL=sqlite:///./data.db
-   ```
-
-   Or leave it unset to use the default.
-
-2. **Database File Location:**
-
-   - The database file (`data.db`) will be created automatically
-   - Store it in a persistent location (e.g., `/var/lib/tiktok-tracker/data.db`)
-
-3. **Run Migrations:**
-
-   ```bash
-   alembic upgrade head
-   ```
-
-   This creates the database file and all tables.
-
-4. **Backup Setup:**
-   - Set up daily cron job to backup database:
-   ```bash
-   # Add to crontab
-   0 3 * * * cd /path/to/backend && python -m scripts.backup_sqlite --upload
-   ```
-
-### Option B: PostgreSQL (Production - After Traction)
-
-### 1.1 Create PostgreSQL Database
-
-1. Log into DigitalOcean dashboard
-2. Navigate to **Databases** → **Create Database**
-3. Choose:
-   - **Engine**: PostgreSQL
-   - **Version**: 14 or later
-   - **Plan**: Basic ($15/month minimum for production)
-   - **Region**: Same as your app
-   - **Database Name**: `tiktok_keywords` (or your choice)
-
-### 1.2 Configure Database Access
-
-1. Go to database settings
-2. Under **Trusted Sources**, add your app's IP or allow all (for App Platform)
-3. Note the connection string (you'll need this)
-
-### 1.3 Run Migrations
-
-Once your backend is deployed, run migrations:
+### Step 2: Initial Server Setup
 
 ```bash
-# SSH into your app or use App Platform console
+# SSH into droplet
+ssh root@your-droplet-ip
+
+# Update system
+apt update && apt upgrade -y
+
+# Install Python 3.11
+apt install python3.11 python3.11-venv python3-pip -y
+
+# Install Node.js 18
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+apt install -y nodejs
+
+# Install Nginx
+apt install nginx -y
+
+# Create app user (optional but recommended)
+adduser tiktok
+usermod -aG sudo tiktok
+su - tiktok
+```
+
+### Step 3: Deploy Application
+
+```bash
+# Clone repository
+git clone your-repo-url
+cd tiktok-trending-keywords
+
+# Backend setup
 cd backend
-alembic upgrade head
+python3.11 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Create data directory
+sudo mkdir -p /var/lib/tiktok-tracker
+sudo chown $USER:$USER /var/lib/tiktok-tracker
+
+# Create .env file
+nano .env
 ```
 
-Or create a one-time migration job in App Platform.
-
-### 1.4 Migrating from SQLite to PostgreSQL
-
-When ready to migrate:
+**Minimum .env configuration:**
 
 ```bash
-python -m scripts.migrate_from_sqlite_to_postgres \
-  sqlite:///./data.db \
-  postgresql://user:pass@host:5432/db
-```
-
-This script copies all data from SQLite to PostgreSQL.
-
-## Step 2: Environment Variables
-
-### 2.1 Backend Environment Variables
-
-Set these in DigitalOcean App Platform → Settings → App-Level Environment Variables:
-
-```bash
-# Database (SQLite for MVP - no setup needed!)
-DATABASE_URL=sqlite:///./data.db
-# OR for PostgreSQL:
-# DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
+# Database - SQLite (no setup needed!)
+DATABASE_URL=sqlite:////var/lib/tiktok-tracker/data.db
 
 # Security
-SECRET_KEY=your-very-long-random-secret-key-here-generate-with-openssl-rand-hex-32
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+SECRET_KEY=$(openssl rand -hex 32)
 
 # Email (for magic links)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-specific-password
+SMTP_PASSWORD=your-app-password
 SMTP_FROM_EMAIL=your-email@gmail.com
 
 # Stripe
@@ -188,151 +173,473 @@ STRIPE_PRICE_ID=price_...
 # App
 APP_NAME=TikTok Keyword Momentum Tracker
 DEBUG=False
+FRONTEND_URL=https://trendearly.xyz
+
+# Public Pages (static HTML generation)
+PUBLIC_PAGES_DIR=/var/www/trendearly/public
 ```
 
-**Generate SECRET_KEY:**
+### Step 4: Initialize Database
 
 ```bash
-openssl rand -hex 32
+# Run migrations (creates database file automatically)
+alembic upgrade head
+
+# Verify database created
+ls -lh /var/lib/tiktok-tracker/data.db
 ```
 
-### 2.2 Frontend Environment Variables
+### Step 5: Create Systemd Services
 
-Set these in App Platform for the frontend component:
+**Backend service:**
 
 ```bash
-NEXT_PUBLIC_API_URL=https://trendearly.xyz
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+sudo nano /etc/systemd/system/tiktok-backend.service
 ```
 
-## Step 3: Backend Deployment
+```ini
+[Unit]
+Description=TikTok Keyword Momentum Tracker API
+After=network.target
 
-### 3.1 Option A: DigitalOcean Droplet (MVP - Recommended)
+[Service]
+User=tiktok
+WorkingDirectory=/home/tiktok/tiktok-trending-keywords/backend
+Environment="PATH=/home/tiktok/tiktok-trending-keywords/backend/venv/bin"
+EnvironmentFile=/home/tiktok/tiktok-trending-keywords/backend/.env
+ExecStart=/home/tiktok/tiktok-trending-keywords/backend/venv/bin/uvicorn src.app.main:app --host 0.0.0.0 --port 8000
+Restart=always
 
-**Best for MVP:** Single Droplet with SQLite
+[Install]
+WantedBy=multi-user.target
+```
 
-1. **Create Droplet**
+**Start service:**
 
-   - Ubuntu 22.04 LTS
-   - **Basic**: 2GB RAM, 1 vCPU ($12/month) - sufficient for MVP
-   - **Recommended**: 4GB RAM, 2 vCPU ($24/month) - better performance
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable tiktok-backend
+sudo systemctl start tiktok-backend
 
-2. **Initial Setup**
+# Check status
+sudo systemctl status tiktok-backend
+```
 
+### Step 6: Configure Nginx
+
+**Use the production-ready configuration:**
+
+```bash
+# Copy the Nginx config from the repository
+sudo cp /home/tiktok/tiktok-trending-keywords/deploy/nginx/trendearly.xyz.conf /etc/nginx/sites-available/trendearly.xyz
+
+# Create symlink
+sudo ln -s /etc/nginx/sites-available/trendearly.xyz /etc/nginx/sites-enabled/
+
+# Test configuration
+sudo nginx -t
+
+# Reload Nginx
+sudo systemctl reload nginx
+```
+
+**Configuration Details:**
+
+The Nginx config (`deploy/nginx/trendearly.xyz.conf`) includes:
+
+- **Root**: `/var/www/trendearly/public` (static public pages)
+- **API Proxy**: `/api/*` → `http://127.0.0.1:8000`
+- **Gzip compression**: Enabled for text-based files
+- **Caching**: Static assets (1y), HTML pages (1h), API (no cache)
+- **Security headers**: X-Frame-Options, X-Content-Type-Options, etc.
+- **SSL ready**: Commented SSL block for after certbot setup
+
+**Note**: The config serves public pages from the root (`/`) and the API from `/api/`. Make sure public pages are generated to `/var/www/trendearly/public` before starting Nginx.
+
+### Step 7: Set Up SSL
+
+**Install Certbot:**
+
+```bash
+sudo apt install certbot python3-certbot-nginx -y
+```
+
+**Obtain SSL Certificate:**
+
+```bash
+sudo certbot --nginx -d trendearly.xyz -d www.trendearly.xyz
+```
+
+**Note**: After running certbot, it will automatically update the Nginx configuration to enable SSL. The config file includes commented SSL blocks that certbot will uncomment and configure.
+
+**Verify SSL:**
+
+```bash
+# Test certificate renewal
+sudo certbot renew --dry-run
+
+# Check certificate status
+sudo certbot certificates
+```
+
+**Auto-renewal**: Certbot sets up automatic renewal via systemd timer. Certificates renew automatically 30 days before expiration.
+
+### Step 8: Set Up Public Pages Generation
+
+The daily pipeline automatically generates static public pages after scoring completes.
+
+**Configure Public Pages Directory:**
+
+Add to `.env`:
+
+```bash
+PUBLIC_PAGES_DIR=/var/www/trendearly/public
+```
+
+**Manual Generation (Optional):**
+
+```bash
+cd backend
+source venv/bin/activate
+python -m scripts.build_public_pages --out /var/www/trendearly/public_tmp --date $(date +%Y-%m-%d)
+```
+
+**Deploy Public Pages (Atomic Swap):**
+
+```bash
+python -m scripts.deploy_public_pages \
+  --source /var/www/trendearly/public_tmp \
+  --target /var/www/trendearly/public \
+  --user www-data \
+  --group www-data
+```
+
+**Note**: Public pages contain only Google Trends data - no TikTok-specific details are exposed.
+
+**Automatic Deployment (Optional):**
+
+To automatically deploy after generation, add to cron job:
+
+```bash
+# After daily pipeline completes, deploy public pages
+30 2 * * * cd /home/tiktok/tiktok-trending-keywords/backend && /home/tiktok/tiktok-trending-keywords/backend/venv/bin/python -m scripts.deploy_public_pages --source /var/www/trendearly/public_tmp --target /var/www/trendearly/public --user www-data --group www-data >> /var/log/trendearly/public_pages_deploy.log 2>&1
+```
+
+Or use systemd timer (see [Public Pages](#public-pages) section below).
+
+### Step 9: Set Up Daily Backups
+
+**Create DigitalOcean Spaces bucket:**
+
+1. Go to DigitalOcean → Spaces
+2. Create bucket
+3. Generate access keys
+4. Add to .env:
    ```bash
-   # Update system
-   sudo apt update && sudo apt upgrade -y
-
-   # Install Python 3.11
-   sudo apt install python3.11 python3.11-venv python3-pip -y
-
-   # Install Node.js 18
-   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-   sudo apt install -y nodejs
-
-   # Install Nginx
-   sudo apt install nginx -y
+   SPACES_ACCESS_KEY=your-key
+   SPACES_SECRET_KEY=your-secret
+   SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com
+   SPACES_BUCKET=your-bucket-name
    ```
 
-3. **Deploy Application**
+**Install backup dependency:**
 
+```bash
+cd backend
+source venv/bin/activate
+pip install boto3
+```
+
+**Set up cron job:**
+
+```bash
+crontab -e
+# Add this line (backup daily at 3 AM):
+0 3 * * * cd /home/tiktok/tiktok-trending-keywords/backend && /home/tiktok/tiktok-trending-keywords/backend/venv/bin/python -m scripts.backup_sqlite --upload
+```
+
+### Step 10: Test Everything
+
+```bash
+# Test backend
+curl http://localhost:8000/api/health
+
+# Test Nginx
+curl http://localhost
+
+# Test pipeline
+cd backend
+source venv/bin/activate
+python -m scripts.run_daily_pipeline --max-keywords 5
+```
+
+## Public Pages
+
+### Overview
+
+Public pages are static HTML files generated from Google Trends data. They contain **no TikTok-specific information** - only keyword names, momentum scores, and Google Trends charts.
+
+### File Locations
+
+- **Generation Directory**: `/var/www/trendearly/public_tmp` (temporary, during generation)
+- **Production Directory**: `/var/www/trendearly/public` (served by Nginx)
+- **Backup Directory**: `/var/www/trendearly/public_prev` (created during atomic swap)
+
+### Structure
+
+```
+/var/www/trendearly/public/
+├── index.html              # Main listing page
+└── keywords/
+    ├── 1/
+    │   └── index.html      # Keyword detail page
+    ├── 2/
+    │   └── index.html
+    └── ...
+```
+
+### Nginx Mapping
+
+The Nginx configuration serves public pages from the root (`/`):
+
+```nginx
+location / {
+    root /var/www/trendearly/public;
+    try_files $uri $uri/ $uri.html /index.html;
+}
+```
+
+**URL Structure:**
+
+- `https://trendearly.xyz/` → `index.html` (keyword listing)
+- `https://trendearly.xyz/keywords/1/` → `keywords/1/index.html` (keyword detail)
+
+### Daily Generation (Cron)
+
+The daily pipeline automatically generates public pages. To set up a cron job for deployment:
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add this line (runs at 2:30 AM, after pipeline completes at 2 AM)
+30 2 * * * cd /home/tiktok/tiktok-trending-keywords/backend && /home/tiktok/tiktok-trending-keywords/backend/venv/bin/python -m scripts.deploy_public_pages --source /var/www/trendearly/public_tmp --target /var/www/trendearly/public --user www-data --group www-data >> /var/log/trendearly/public_pages_deploy.log 2>&1
+```
+
+**Or use systemd timer** (more robust):
+
+Create `/etc/systemd/system/trendearly-deploy-pages.service`:
+
+```ini
+[Unit]
+Description=Deploy TrendEarly Public Pages
+After=daily-pipeline.service
+
+[Service]
+Type=oneshot
+User=tiktok
+WorkingDirectory=/home/tiktok/tiktok-trending-keywords/backend
+ExecStart=/home/tiktok/tiktok-trending-keywords/backend/venv/bin/python -m scripts.deploy_public_pages --source /var/www/trendearly/public_tmp --target /var/www/trendearly/public --user www-data --group www-data
+```
+
+Create `/etc/systemd/system/trendearly-deploy-pages.timer`:
+
+```ini
+[Unit]
+Description=Deploy TrendEarly Public Pages Daily
+Requires=trendearly-deploy-pages.service
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+Enable:
+
+```bash
+sudo systemctl enable trendearly-deploy-pages.timer
+sudo systemctl start trendearly-deploy-pages.timer
+```
+
+### Verification
+
+**Before deploying, verify pages are clean:**
+
+```bash
+cd backend
+source venv/bin/activate
+
+# Check for forbidden words
+python -m scripts.check_public_pages_no_tiktok /var/www/trendearly/public_tmp
+```
+
+**Expected Output:**
+
+```
+INFO: ✓ All pages passed: No TikTok mentions found
+```
+
+### Troubleshooting
+
+#### Pages Not Updating
+
+**Problem:** Public pages show old data
+
+**Solutions:**
+
+1. Check if generation ran:
    ```bash
-   # Clone repository
-   git clone your-repo-url
-   cd tiktok-trending-keywords
-
-   # Backend setup
+   ls -la /var/www/trendearly/public_tmp/
+   ```
+2. Check pipeline logs:
+   ```bash
+   journalctl -u tiktok-backend -f | grep "public pages"
+   ```
+3. Manually regenerate:
+   ```bash
    cd backend
-   python3.11 -m venv venv
    source venv/bin/activate
-   pip install -r requirements.txt
-
-   # Create data directory
-   sudo mkdir -p /var/lib/tiktok-tracker
-   sudo chown $USER:$USER /var/lib/tiktok-tracker
-
-   # Set environment variables
-   nano .env
-   # DATABASE_URL=sqlite:////var/lib/tiktok-tracker/data.db
-   # Add other variables...
-
-   # Run migrations
-   alembic upgrade head
+   python -m scripts.build_public_pages --out /var/www/trendearly/public_tmp --date $(date +%Y-%m-%d)
    ```
 
-4. **Create Systemd Service**
+#### Permission Errors
 
+**Problem:** `Permission denied` when deploying
+
+**Solutions:**
+
+1. Check directory ownership:
    ```bash
-   sudo nano /etc/systemd/system/tiktok-backend.service
+   ls -la /var/www/trendearly/
    ```
-
-   Content:
-
-   ```ini
-   [Unit]
-   Description=TikTok Keyword Momentum Tracker API
-   After=network.target
-
-   [Service]
-   User=your-user
-   WorkingDirectory=/home/your-user/tiktok-trending-keywords/backend
-   Environment="PATH=/home/your-user/tiktok-trending-keywords/backend/venv/bin"
-   EnvironmentFile=/home/your-user/tiktok-trending-keywords/backend/.env
-   ExecStart=/home/your-user/tiktok-trending-keywords/backend/venv/bin/uvicorn src.app.main:app --host 0.0.0.0 --port 8000
-   Restart=always
-
-   [Install]
-   WantedBy=multi-user.target
-   ```
-
+2. Fix ownership:
    ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable tiktok-backend
-   sudo systemctl start tiktok-backend
+   sudo chown -R tiktok:tiktok /var/www/trendearly/public_tmp
    ```
-
-5. **Set Up Daily Backups**
-
+3. Ensure deploy script has sudo access (if needed):
    ```bash
-   # Install boto3 for Spaces upload (optional)
-   source venv/bin/activate
-   pip install boto3
-
-   # Add to crontab
-   crontab -e
-   # Add: 0 3 * * * cd /path/to/backend && /path/to/venv/bin/python -m scripts.backup_sqlite --upload
+   sudo visudo
+   # Add: tiktok ALL=(ALL) NOPASSWD: /usr/bin/chown, /usr/bin/chmod
    ```
 
-6. **Configure Nginx**
+#### Nginx 404 Errors
 
+**Problem:** Pages return 404 in browser
+
+**Solutions:**
+
+1. Check Nginx root directory:
    ```bash
-   sudo nano /etc/nginx/sites-available/tiktok-backend
+   sudo nginx -T | grep "root"
    ```
-
-   Content:
-
-   ```nginx
-   server {
-       listen 80;
-       server_name trendearly.xyz;
-
-       location / {
-           proxy_pass http://127.0.0.1:8000;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-           proxy_set_header X-Forwarded-Proto $scheme;
-       }
-   }
-   ```
-
+2. Verify files exist:
    ```bash
-   sudo ln -s /etc/nginx/sites-available/tiktok-backend /etc/nginx/sites-enabled/
+   ls -la /var/www/trendearly/public/index.html
+   ```
+3. Check Nginx error log:
+   ```bash
+   sudo tail -f /var/log/nginx/trendearly_error.log
+   ```
+4. Test Nginx configuration:
+   ```bash
    sudo nginx -t
    sudo systemctl reload nginx
    ```
 
-### 3.2 Option B: DigitalOcean App Platform (Production)
+#### Forbidden Words Found
+
+**Problem:** Check script finds TikTok mentions
+
+**Solutions:**
+
+1. Review the violation:
+   ```bash
+   python -m scripts.check_public_pages_no_tiktok /var/www/trendearly/public_tmp
+   ```
+2. Check the source:
+   ```bash
+   grep -r -i "tiktok" /var/www/trendearly/public_tmp/
+   ```
+3. Review build script for hardcoded mentions
+4. Regenerate after fixing
+
+#### Missing Google Trends Data
+
+**Problem:** Charts don't display
+
+**Solutions:**
+
+1. Check database has trends cache:
+   ```bash
+   sqlite3 /var/lib/tiktok-tracker/data.db "SELECT COUNT(*) FROM google_trends_cache;"
+   ```
+2. Verify trends data in snapshot:
+   ```bash
+   sqlite3 /var/lib/tiktok-tracker/data.db "SELECT keyword_id, google_trends_data IS NOT NULL FROM daily_snapshots LIMIT 5;"
+   ```
+3. Re-run pipeline to fetch trends:
+   ```bash
+   python -m scripts.run_daily_pipeline --max-keywords 10
+   ```
+
+### Monitoring
+
+**Check generation status:**
+
+```bash
+# Check last generation time
+ls -lt /var/www/trendearly/public/index.html
+
+# Check deployment log
+tail -f /var/log/trendearly/public_pages_deploy.log
+```
+
+**Set up alerts:**
+
+- Monitor file modification time
+- Check for errors in deployment log
+- Verify check script passes before deployment
+
+### Related Documentation
+
+- `docs/VERIFY_PUBLIC_PAGES.md` - Full verification guide
+- `backend/scripts/build_public_pages.py` - Generation script
+- `backend/scripts/check_public_pages_no_tiktok.py` - Verification script
+- `backend/scripts/deploy_public_pages.py` - Deployment script
+
+## Production Deployment (App Platform + PostgreSQL)
+
+### When to Use Production Setup
+
+Migrate to production setup when you need:
+
+- Multiple app instances (horizontal scaling)
+- High write concurrency
+- Advanced database features
+- Better performance at scale
+- Managed infrastructure
+
+### Step 1: Create PostgreSQL Database
+
+1. Log into DigitalOcean dashboard
+2. Navigate to **Databases** → **Create Database**
+3. Choose:
+   - **Engine**: PostgreSQL
+   - **Version**: 14 or later
+   - **Plan**: Basic ($15/month minimum for production)
+   - **Region**: Same as your app
+   - **Database Name**: `tiktok_keywords` (or your choice)
+
+### Step 2: Configure Database Access
+
+1. Go to database settings
+2. Under **Trusted Sources**, add your app's IP or allow all (for App Platform)
+3. Note the connection string (you'll need this)
+
+### Step 3: Deploy Backend on App Platform
 
 1. **Connect Repository**
 
@@ -356,175 +663,14 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 
 3. **Environment Variables**
 
-   - Add all backend environment variables from Step 2.1
+   - Add all backend environment variables (see [Environment Variables](#environment-variables) section)
+   - Set `DATABASE_URL` to PostgreSQL connection string
 
 4. **Health Check**
-   - **Path**: `/health`
+   - **Path**: `/api/health`
    - **Initial Delay**: 30 seconds
 
-### 3.3 Option C: DigitalOcean Droplet (Manual - Alternative)
-
-1. **Create Droplet**
-
-   - Ubuntu 22.04 LTS
-   - Minimum: 2GB RAM, 1 vCPU ($12/month)
-   - Recommended: 4GB RAM, 2 vCPU ($24/month)
-
-2. **Initial Setup**
-
-   ```bash
-   # Update system
-   sudo apt update && sudo apt upgrade -y
-
-   # Install Python 3.11
-   sudo apt install python3.11 python3.11-venv python3-pip -y
-
-   # Install PostgreSQL client
-   sudo apt install postgresql-client -y
-
-   # Install Nginx
-   sudo apt install nginx -y
-   ```
-
-3. **Deploy Application**
-
-   ```bash
-   # Clone repository
-   git clone your-repo-url
-   cd tiktok-trending-keywords/backend
-
-   # Create virtual environment
-   python3.11 -m venv venv
-   source venv/bin/activate
-
-   # Install dependencies
-   pip install -r requirements.txt
-
-   # Set environment variables
-   nano .env
-   # (Add all environment variables)
-
-   # Run migrations
-   alembic upgrade head
-   ```
-
-4. **Create Systemd Service**
-
-   ```bash
-   sudo nano /etc/systemd/system/tiktok-backend.service
-   ```
-
-   Content:
-
-   ```ini
-   [Unit]
-   Description=TikTok Keyword Momentum Tracker API
-   After=network.target
-
-   [Service]
-   User=your-user
-   WorkingDirectory=/home/your-user/tiktok-trending-keywords/backend
-   Environment="PATH=/home/your-user/tiktok-trending-keywords/backend/venv/bin"
-   ExecStart=/home/your-user/tiktok-trending-keywords/backend/venv/bin/uvicorn src.app.main:app --host 0.0.0.0 --port 8000
-   Restart=always
-
-   [Install]
-   WantedBy=multi-user.target
-   ```
-
-   ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable tiktok-backend
-   sudo systemctl start tiktok-backend
-   ```
-
-5. **Configure Nginx**
-
-   ```bash
-   sudo nano /etc/nginx/sites-available/tiktok-backend
-   ```
-
-   Content:
-
-   ```nginx
-   server {
-       listen 80;
-       server_name trendearly.xyz;
-
-       location / {
-           proxy_pass http://127.0.0.1:8000;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-           proxy_set_header X-Forwarded-Proto $scheme;
-       }
-   }
-   ```
-
-   ```bash
-   sudo ln -s /etc/nginx/sites-available/tiktok-backend /etc/nginx/sites-enabled/
-   sudo nginx -t
-   sudo systemctl reload nginx
-   ```
-
-## Step 4: Frontend Deployment
-
-### 4.1 Option A: Same Droplet (MVP)
-
-Deploy frontend on the same Droplet:
-
-```bash
-cd frontend
-npm install
-npm run build
-
-# Create systemd service for frontend
-sudo nano /etc/systemd/system/tiktok-frontend.service
-```
-
-Content:
-
-```ini
-[Unit]
-Description=TikTok Keyword Momentum Tracker Frontend
-After=network.target
-
-[Service]
-User=your-user
-WorkingDirectory=/home/your-user/tiktok-trending-keywords/frontend
-Environment="NODE_ENV=production"
-Environment="NEXT_PUBLIC_API_URL=http://localhost:8000"
-ExecStart=/usr/bin/npm start
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Update Nginx to serve both:
-
-```nginx
-server {
-    listen 80;
-    server_name trendearly.xyz;
-
-    # Frontend
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-
-    # Backend API
-    location /api {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-### 4.2 Option B: DigitalOcean App Platform
+### Step 4: Deploy Frontend on App Platform
 
 1. **Add Frontend Component**
 
@@ -542,45 +688,86 @@ server {
    - **HTTP Port**: 3000 (or use $PORT)
 
 2. **Environment Variables**
-   - Add frontend environment variables from Step 2.2
+   - Add frontend environment variables (see [Environment Variables](#environment-variables) section)
 
-### 4.3 Option C: Vercel (Alternative - Recommended for Next.js)
+### Step 5: Run Migrations
 
-1. **Connect Repository**
-
-   - Go to vercel.com
-   - Import your GitHub repository
-   - Set root directory to `frontend`
-
-2. **Environment Variables**
-
-   - Add `NEXT_PUBLIC_API_URL`
-   - Add `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-
-3. **Deploy**
-   - Vercel auto-deploys on push to main branch
-
-## Step 5: Scheduler Setup
-
-### 5.1 App Platform (Automatic)
-
-The scheduler runs automatically when the backend starts (if DEBUG=False).
-
-### 5.2 Droplet (Cron Job)
-
-If using a Droplet, you can use cron instead:
+Once backend is deployed, run migrations:
 
 ```bash
-# Edit crontab
-crontab -e
-
-# Add daily job at 2 AM UTC
-0 2 * * * cd /path/to/backend && /path/to/venv/bin/python -m scripts.run_daily_pipeline >> /var/log/tiktok-pipeline.log 2>&1
+# SSH into your app or use App Platform console
+cd backend
+alembic upgrade head
 ```
 
-Or keep the APScheduler running in the background service.
+Or create a one-time migration job in App Platform.
 
-## Step 6: Stripe Webhook Configuration
+### Step 6: Migrating from SQLite to PostgreSQL
+
+When ready to migrate:
+
+```bash
+python -m scripts.migrate_from_sqlite_to_postgres \
+  sqlite:////var/lib/tiktok-tracker/data.db \
+  postgresql://user:pass@host:5432/db
+```
+
+This script copies all data from SQLite to PostgreSQL.
+
+## Environment Variables
+
+### Backend Environment Variables
+
+Set these in DigitalOcean App Platform → Settings → App-Level Environment Variables, or in `.env` file for Droplet:
+
+```bash
+# Database (SQLite for MVP - no setup needed!)
+DATABASE_URL=sqlite:////var/lib/tiktok-tracker/data.db
+# OR for PostgreSQL:
+# DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
+
+# Security
+SECRET_KEY=your-very-long-random-secret-key-here-generate-with-openssl-rand-hex-32
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Email (for magic links)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-specific-password
+SMTP_FROM_EMAIL=your-email@gmail.com
+
+# Stripe
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_ID=price_...
+
+# App
+APP_NAME=TikTok Keyword Momentum Tracker
+DEBUG=False
+FRONTEND_URL=https://trendearly.xyz
+
+# Public Pages (static HTML generation)
+PUBLIC_PAGES_DIR=/var/www/trendearly/public
+```
+
+**Generate SECRET_KEY:**
+
+```bash
+openssl rand -hex 32
+```
+
+### Frontend Environment Variables
+
+Set these in App Platform for the frontend component, or in `.env.local` for local development:
+
+```bash
+NEXT_PUBLIC_API_URL=https://trendearly.xyz
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+```
+
+## Stripe Webhook Configuration
 
 1. **Get Webhook Secret**
 
@@ -600,50 +787,58 @@ Or keep the APScheduler running in the background service.
      stripe listen --forward-to localhost:8000/api/stripe/webhook
      ```
 
-## Step 7: SSL/HTTPS Setup
+## Scheduler Setup
 
-### 7.1 App Platform
+### App Platform (Automatic)
 
-SSL is automatically handled by App Platform.
+The scheduler runs automatically when the backend starts (if DEBUG=False).
 
-### 7.2 Droplet with Nginx
+### Droplet (Cron Job or APScheduler)
+
+**Option 1: Use APScheduler (Recommended)**
+
+The scheduler runs automatically in the backend service (if DEBUG=False).
+
+**Option 2: Use Cron Job**
 
 ```bash
-# Install Certbot
-sudo apt install certbot python3-certbot-nginx -y
+# Edit crontab
+crontab -e
 
-# Get certificate
-sudo certbot --nginx -d trendearly.xyz
-
-# Auto-renewal is set up automatically
+# Add daily job at 2 AM UTC
+0 2 * * * cd /home/tiktok/tiktok-trending-keywords/backend && /home/tiktok/tiktok-trending-keywords/backend/venv/bin/python -m scripts.run_daily_pipeline >> /var/log/tiktok-pipeline.log 2>&1
 ```
 
-## Step 8: Monitoring and Logging
+## Monitoring and Logging
 
-### 8.1 App Platform
+### App Platform
 
 - Built-in logging dashboard
 - Set up alerts for errors
 
-### 8.2 Droplet
+### Droplet
 
 ```bash
 # View backend logs
 sudo journalctl -u tiktok-backend -f
 
-# View pipeline logs
+# View pipeline logs (if using cron)
 tail -f /var/log/tiktok-pipeline.log
+
+# View Nginx logs
+sudo tail -f /var/log/nginx/trendearly_access.log
+sudo tail -f /var/log/nginx/trendearly_error.log
 ```
 
-### 8.3 External Monitoring (Optional)
+### External Monitoring (Optional)
 
 - Set up UptimeRobot or similar for health checks
-- Monitor `/health` endpoint
+- Monitor `/api/health` endpoint
 - Set up error alerting
 
-## Step 9: Backup Strategy
+## Backup Strategy
 
-### 9.1 SQLite Backups (MVP)
+### SQLite Backups (MVP)
 
 **Daily Automated Backup to Spaces:**
 
@@ -686,7 +881,7 @@ tail -f /var/log/tiktok-pipeline.log
 - Monthly backups for long-term retention
 - Test restore procedure regularly
 
-### 9.2 PostgreSQL Backups (Production)
+### PostgreSQL Backups (Production)
 
 DigitalOcean Managed PostgreSQL:
 
@@ -699,66 +894,134 @@ Manual backups:
 pg_dump $DATABASE_URL > backup_$(date +%Y%m%d).sql
 ```
 
-### 9.3 Application Backups
+### Application Backups
 
 - Code: GitHub repository
 - Environment variables: Store securely (1Password, etc.)
 - Regular database exports
 
-## Step 10: Initial Setup Checklist
+## Maintenance
 
-- [ ] PostgreSQL database created and accessible
+### View Logs
+
+```bash
+# Backend logs
+sudo journalctl -u tiktok-backend -f
+
+# Frontend is static - no logs needed (served by Nginx)
+# Check Nginx logs if needed:
+sudo tail -f /var/log/nginx/trendearly_access.log
+sudo tail -f /var/log/nginx/trendearly_error.log
+
+# Pipeline logs (if using cron)
+tail -f /var/log/tiktok-pipeline.log
+```
+
+### Manual Backup
+
+```bash
+cd backend
+source venv/bin/activate
+python -m scripts.backup_sqlite --upload
+```
+
+### Restore from Backup
+
+```bash
+# Download backup from Spaces
+# Then:
+cp backup_file.db /var/lib/tiktok-tracker/data.db
+sudo systemctl restart tiktok-backend
+```
+
+## Initial Setup Checklist
+
+- [ ] Droplet/App Platform created
+- [ ] Database initialized (SQLite or PostgreSQL)
 - [ ] Database migrations run successfully
 - [ ] All environment variables configured
-- [ ] Backend deployed and health check passing
+- [ ] Backend deployed and health check passing (`/api/health`)
 - [ ] Frontend deployed and accessible
-- [ ] Stripe webhook configured and tested
+- [ ] Nginx configured and serving pages
 - [ ] SSL certificate installed
+- [ ] Stripe webhook configured and tested
 - [ ] Scheduler running (check logs)
+- [ ] Daily backups configured
+- [ ] Public pages generation working
 - [ ] Test magic link authentication
 - [ ] Test Stripe checkout flow
 - [ ] Monitor first daily pipeline run
 
-## Step 11: Post-Deployment Testing
+## Post-Deployment Testing
 
-### 11.1 Test Authentication
+### Test Authentication
 
 1. Request magic link: `POST /api/auth/login`
 2. Check email for magic link
 3. Verify token: `POST /api/auth/verify`
 4. Test protected endpoint: `GET /api/auth/me`
 
-### 11.2 Test Stripe
+### Test Stripe
 
 1. Create checkout session: `POST /api/stripe/create-checkout`
 2. Complete test payment
 3. Verify webhook received
 4. Check user subscription status
 
-### 11.3 Test Pipeline
+### Test Pipeline
 
-1. Run manually: `python -m scripts.run_daily_pipeline`
+1. Run manually: `python -m scripts.run_daily_pipeline --max-keywords 5`
 2. Check logs for errors
 3. Verify keywords in database
 4. Verify scores calculated
+5. Verify public pages generated
 
 ## Troubleshooting
 
 ### Database Connection Issues
 
 ```bash
-# Test connection
+# Test SQLite connection
+sqlite3 /var/lib/tiktok-tracker/data.db "SELECT COUNT(*) FROM keywords;"
+
+# Test PostgreSQL connection
 psql $DATABASE_URL
 
-# Check SSL mode
+# Check SSL mode (PostgreSQL)
 # Ensure DATABASE_URL includes ?sslmode=require
 ```
+
+### Database Locked Error (SQLite)
+
+- SQLite doesn't handle concurrent writes well
+- This is fine for MVP (single server, daily batch processing)
+- Ensure backups run after daily pipeline (when writes are done)
+- Migrate to PostgreSQL if you see this frequently
+
+### Backup Corruption
+
+- The backup script uses SQLite's online backup API (safe during writes)
+- If you see corruption, ensure WAL checkpoint completes
+- Consider running backups right after daily pipeline completes
+
+### Backup Failed
+
+- Check Spaces credentials
+- Verify bucket exists
+- Check file permissions
 
 ### Scheduler Not Running
 
 - Check DEBUG environment variable (should be False)
 - Check application logs
 - Verify scheduler started in startup logs
+
+### Service Won't Start
+
+- Check logs: `sudo journalctl -u tiktok-backend -n 50`
+- Verify .env file exists and is readable
+- Check database file permissions
+- Verify all environment variables are set
 
 ### Email Not Sending
 
@@ -778,9 +1041,17 @@ psql $DATABASE_URL
 
 ### MVP Setup (Recommended for Launch)
 
-- **Droplet (2GB)**: ~$12/month (varies by region)
+- **Droplet (2GB)**: ~$12/month (varies by region/plan)
 - **DigitalOcean Spaces** (for backups): ~$5/month minimum (depends on storage/egress)
 - **Total: ~$17-20/month** ✅ (typical cost)
+
+Compare to production setup:
+
+- App Platform: ~$12/month
+- Managed PostgreSQL: ~$15/month minimum
+- **Total: ~$27/month minimum**
+
+**Savings: ~$7-10/month = ~$84-120/year** (typical)
 
 ### Production Setup (After Traction)
 
@@ -799,7 +1070,7 @@ psql $DATABASE_URL
 ## Security Checklist
 
 - [ ] SECRET_KEY is strong and unique
-- [ ] Database uses SSL connections
+- [ ] Database uses SSL connections (PostgreSQL)
 - [ ] Environment variables not in code
 - [ ] HTTPS enabled (SSL certificate)
 - [ ] CORS configured for frontend domain only
@@ -807,6 +1078,7 @@ psql $DATABASE_URL
 - [ ] Database backups enabled
 - [ ] Webhook signature verification working
 - [ ] SMTP credentials secure
+- [ ] Public pages contain no TikTok mentions (verified)
 
 ## Next Steps
 
@@ -827,3 +1099,4 @@ For issues:
 3. Verify environment variables
 4. Test endpoints with curl/Postman
 5. Review error messages in logs
+6. See `docs/VERIFY_PUBLIC_PAGES.md` for public pages verification

@@ -933,8 +933,7 @@
 
 #### Documentation
 
-- `MVP_DEPLOYMENT.md` - Complete MVP deployment guide
-- Updated `DEPLOYMENT.md` - Added SQLite option and cost comparison
+- `DEPLOYMENT.md` - Complete deployment guide (MVP and Production, includes SQLite option and cost comparison)
 - Updated `QUICK_START.md` - Added SQLite setup instructions
 - Updated `README.md` - Updated prerequisites
 
@@ -1367,7 +1366,7 @@
 
 #### Documentation
 
-- `MVP_DEPLOYMENT.md` - Updated with public pages setup
+- `DEPLOYMENT.md` - Updated with public pages setup
 
   - Configuration instructions
   - Nginx configuration for /public route
@@ -1443,7 +1442,7 @@ python -m scripts.deploy_public_pages \
 
 ✅ **Documentation:**
 
-- MVP_DEPLOYMENT.md updated
+- DEPLOYMENT.md updated
 - Configuration instructions included
 - Nginx setup documented
 
@@ -1493,7 +1492,7 @@ python -m scripts.deploy_public_pages \
 
 #### Documentation
 
-- `MVP_DEPLOYMENT.md` - Updated Nginx setup instructions
+- `DEPLOYMENT.md` - Updated Nginx setup instructions
 
   - References new config file location
   - Updated SSL setup instructions
@@ -1617,7 +1616,7 @@ sudo certbot --nginx -d trendearly.xyz -d www.trendearly.xyz
 
 #### Documentation
 
-- `MVP_DEPLOYMENT.md` - Added "Public Pages" section
+- `DEPLOYMENT.md` - Consolidated MVP and Production deployment guides
 
   - File locations and structure
   - Nginx mapping details
@@ -1724,3 +1723,76 @@ python -m scripts.deploy_public_pages \
 - Can integrate check into CI/CD pipeline
 - Monitoring can be set up to alert on check failures
 - Management script allows testing without running full application
+
+---
+
+## Session: Consolidate Deployment Documentation
+
+**Date**: [Current Date]
+**Goal**: Consolidate MVP_DEPLOYMENT.md and DEPLOYMENT.md into a single unified deployment guide
+
+### Files Modified
+
+#### Documentation
+- `DEPLOYMENT.md` - Completely rewritten and consolidated (1072 lines)
+  - Added "Quick Start: MVP" section at the top
+  - Streamlined MVP deployment steps (from MVP_DEPLOYMENT.md)
+  - Comprehensive production deployment section (App Platform + PostgreSQL)
+  - Complete Public Pages section (from MVP_DEPLOYMENT.md)
+  - All troubleshooting, monitoring, and maintenance sections
+  - Eliminated all duplication
+
+- `docs/VERIFY_PUBLIC_PAGES.md` - Updated reference
+  - Changed reference from MVP_DEPLOYMENT.md to DEPLOYMENT.md
+
+- `README.md` - Updated reference
+  - Clarified that DEPLOYMENT.md covers both MVP and Production
+
+- `SQLITE_SAFETY_FIXES.md` - Updated reference
+  - Removed reference to MVP_DEPLOYMENT.md
+
+- `CURSOR_LOG.md` - Updated all historical references
+  - Changed all mentions of MVP_DEPLOYMENT.md to DEPLOYMENT.md
+
+### Files Deleted
+
+- `MVP_DEPLOYMENT.md` - Removed (content consolidated into DEPLOYMENT.md)
+
+### New Structure
+
+**DEPLOYMENT.md now contains:**
+
+1. **Quick Start: MVP** - Streamlined steps for fastest deployment
+2. **Prerequisites** - Common requirements
+3. **Architecture Overview** - MVP vs Production diagrams
+4. **Database Strategy** - SQLite for MVP rationale
+5. **MVP Deployment Steps** - Complete step-by-step guide (10 steps)
+6. **Public Pages** - Complete section with troubleshooting
+7. **Production Deployment** - App Platform + PostgreSQL setup
+8. **Environment Variables** - Complete configuration
+9. **Stripe Webhook** - Setup instructions
+10. **Scheduler Setup** - Both options
+11. **Monitoring and Logging** - Both platforms
+12. **Backup Strategy** - SQLite and PostgreSQL
+13. **Maintenance** - Logs, backups, restore
+14. **Checklists** - Initial setup and security
+15. **Testing** - Post-deployment verification
+16. **Troubleshooting** - Common issues
+17. **Cost Estimation** - MVP vs Production comparison
+
+### Benefits
+
+✅ **Single Source of Truth**: One file for all deployment needs
+✅ **Clear Structure**: Quick Start for MVP, detailed sections for both
+✅ **No Duplication**: All content consolidated, no redundant information
+✅ **Easy Navigation**: Clear sections, table of contents via headers
+✅ **Complete Coverage**: All information from both files preserved
+
+### Migration Notes
+
+- All references to MVP_DEPLOYMENT.md updated to DEPLOYMENT.md
+- Quick Start section provides fast path for MVP users
+- Production section clearly separated for when needed
+- Public Pages section fully integrated
+- All troubleshooting and maintenance preserved
+- Historical references in CURSOR_LOG.md updated for accuracy

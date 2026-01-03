@@ -353,7 +353,7 @@ After local verification:
 
 ## Related Documentation
 
-- `MVP_DEPLOYMENT.md` - Production deployment guide
+- `DEPLOYMENT.md` - Complete deployment guide
 - `backend/scripts/build_public_pages.py` - Page generation script
 - `backend/scripts/check_public_pages_no_tiktok.py` - Automated check script
 - `backend/scripts/deploy_public_pages.py` - Deployment script
