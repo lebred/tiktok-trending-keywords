@@ -11,7 +11,10 @@ Runs the complete daily pipeline:
 
 import asyncio
 import logging
+import sys
+import subprocess
 from datetime import date, datetime
+from pathlib import Path
 from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 
