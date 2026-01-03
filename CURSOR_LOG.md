@@ -1952,3 +1952,47 @@ python -m scripts.deploy_public_pages \
 - Validation checklist added
 - Reduced duplication
 - Clear build artifacts section
+
+---
+
+## Session: Security and Scheduler Clarity Fixes
+
+**Date**: [Current Date]
+**Goal**: Fix security issue (API binding) and clarify scheduler behavior
+
+### Files Modified
+
+#### Documentation
+
+- `DEPLOYMENT.md` - Security and clarity fixes
+
+  - **Security**: Changed backend bind host from `0.0.0.0` to `127.0.0.1` in systemd service
+  - Added security note: "API is not publicly exposed; Nginx is the only public entrypoint"
+  - **Log Paths**: Added step to create `/var/log/trendearly` directory with correct ownership
+  - **Scheduler Clarity**: Made unambiguous that pipeline generates to `public_tmp` but does NOT deploy automatically
+  - Clarified that deployment is REQUIRED via cron/systemd timer (not optional)
+  - Updated "Daily Automation Order" to reflect actual behavior (pipeline generates, separate step deploys)
+  - Kept SEO note concise: "Future enhancement could use slugs (`/k/keyword-slug/`)"
+
+- `PROJECT_STATE.md` - Updated to reflect changes
+  - Added note about API binding to 127.0.0.1
+  - Clarified scheduler behavior: generates to `public_tmp`, deployment requires separate step
+
+### Key Changes
+
+**Security Fix:**
+
+- Backend now binds to `127.0.0.1` instead of `0.0.0.0`
+- API is not publicly accessible, only via Nginx reverse proxy
+- Added explicit security note in documentation
+
+**Scheduler Clarity:**
+
+- Removed contradictory language about "automatic deployment"
+- Made clear: pipeline generates to `public_tmp`, deployment is separate step
+- Updated automation sequence to reflect actual timing (2:00 AM pipeline, 2:30 AM deploy, 3:00 AM backup)
+
+**Log Paths:**
+
+- Added explicit step to create `/var/log/trendearly` directory
+- Ensures log files can be written without permission errors

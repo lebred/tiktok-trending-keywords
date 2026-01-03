@@ -158,6 +158,10 @@ sudo chown $USER:$USER /var/lib/tiktok-tracker
 sudo mkdir -p /var/www/trendearly/{public,app}
 sudo chown -R $USER:$USER /var/www/trendearly
 
+# Create log directory
+sudo mkdir -p /var/log/trendearly
+sudo chown $USER:$USER /var/log/trendearly
+
 # Create .env file
 nano .env
 ```
@@ -218,7 +222,7 @@ User=trendearly
 WorkingDirectory=/home/trendearly/tiktok-trending-keywords/backend
 Environment="PATH=/home/trendearly/tiktok-trending-keywords/backend/venv/bin"
 EnvironmentFile=/home/trendearly/tiktok-trending-keywords/backend/.env
-ExecStart=/home/trendearly/tiktok-trending-keywords/backend/venv/bin/uvicorn src.app.main:app --host 0.0.0.0 --port 8000
+ExecStart=/home/trendearly/tiktok-trending-keywords/backend/venv/bin/uvicorn src.app.main:app --host 127.0.0.1 --port 8000
 Restart=always
 
 [Install]
@@ -238,6 +242,8 @@ sudo systemctl status trendearly-backend
 # Check logs
 sudo journalctl -u trendearly-backend -f
 ```
+
+**Security Note**: The API binds to `127.0.0.1` (localhost only), not `0.0.0.0`. The API is not publicly exposed; Nginx is the only public entrypoint and proxies requests to the backend.
 
 ### Step 6: Static Frontend Build + Deploy (Optional /app)
 
@@ -411,17 +417,21 @@ python -m scripts.deploy_public_pages \
 
 **Recommended: Use APScheduler (built into backend)**
 
-The backend service automatically runs the daily pipeline via APScheduler when `DEBUG=False`. No additional setup needed.
+The backend service automatically runs the daily pipeline via APScheduler when `DEBUG=False`. The pipeline:
+
+- Fetches keywords from TikTok
+- Calculates momentum scores
+- **Generates public pages to `/var/www/trendearly/public_tmp`** (does NOT deploy automatically)
 
 **Schedule:**
 
 - **Pipeline**: Runs daily at 2:00 AM UTC
-- **Public Pages**: Generated automatically after pipeline completes
-- **Deployment**: Manual or via cron (see below)
+- **Public Pages Generation**: Automatic (writes to `public_tmp`)
+- **Public Pages Deployment**: **REQUIRED** - Must be done via cron or systemd timer (see below)
 
-**Optional: Use Cron for Public Pages Deployment**
+**Set Up Public Pages Deployment (Required)**
 
-If you want to deploy public pages separately from generation:
+The pipeline generates pages to `public_tmp` but does not deploy them. You must set up one of the following:
 
 ```bash
 crontab -e
@@ -430,7 +440,7 @@ crontab -e
 30 2 * * * cd /home/trendearly/tiktok-trending-keywords/backend && /home/trendearly/tiktok-trending-keywords/backend/venv/bin/python -m scripts.deploy_public_pages --source /var/www/trendearly/public_tmp --target /var/www/trendearly/public --user www-data --group www-data >> /var/log/trendearly/public_pages_deploy.log 2>&1
 ```
 
-**Or use systemd timer** (more robust):
+**Option 2: Use systemd timer** (recommended, more robust):
 
 Create `/etc/systemd/system/trendearly-deploy-pages.service`:
 
@@ -472,11 +482,9 @@ sudo systemctl start trendearly-deploy-pages.timer
 
 **Daily Automation Order (Safe Sequence):**
 
-1. **2:00 AM UTC**: Daily pipeline runs (writes to SQLite)
-2. **2:05 AM UTC**: Public pages generated to `public_tmp`
-3. **2:10 AM UTC**: Forbidden-word scan runs
-4. **2:15 AM UTC**: Atomic deploy public pages (swap)
-5. **3:00 AM UTC**: SQLite backup runs (after all writes complete)
+1. **2:00 AM UTC**: Daily pipeline runs (writes to SQLite, generates public pages to `public_tmp`)
+2. **2:30 AM UTC**: Public pages deployment runs (cron/systemd timer: scans + atomic deploy)
+3. **3:00 AM UTC**: SQLite backup runs (after all writes complete)
 
 **Set Up DigitalOcean Spaces:**
 

@@ -23,6 +23,8 @@ TikTok Keyword Momentum Tracker - MVP web application that identifies newly emer
 - **Frontend**: Next.js with App Router - Structure initialized
 - **Database**: SQLite (MVP) / PostgreSQL (Production) - Both supported
 - **Scheduler**: Python scheduler (APScheduler) - ✅ Implemented
+  - Runs daily pipeline at 2:00 AM UTC
+  - Generates public pages to `public_tmp` (deployment requires separate cron/systemd timer)
 - **Deployment**: DigitalOcean - To be configured
 
 ## Components Status
@@ -74,6 +76,7 @@ TikTok Keyword Momentum Tracker - MVP web application that identifies newly emer
 - **Features**: Pagination, filtering, Pydantic schemas
 - **CORS**: ✅ Configured for production (restricted to trendearly.xyz)
 - **Security**: ✅ Production CORS restrictions, security headers
+- **API Binding**: ✅ Binds to 127.0.0.1 (localhost only), Nginx is public entrypoint
 
 ### Website
 
