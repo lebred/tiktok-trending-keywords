@@ -1586,4 +1586,128 @@ sudo certbot --nginx -d trendearly.xyz -d www.trendearly.xyz
 - Health endpoint can be used by monitoring tools
 - Security headers are basic but sufficient for MVP
 - Can add more security headers (CSP, HSTS) later if needed
+
+---
+
+## Session: Public Pages Verification and Automated Checks
+
+**Date**: [Current Date]
+**Goal**: Create verification documentation and automated checks for public pages
+
+### Files Created
+
+#### Documentation
+- `docs/VERIFY_PUBLIC_PAGES.md` - Complete verification guide
+  - Step-by-step instructions for local verification
+  - Commands for migrations, data ingestion, page generation
+  - Inspection guidelines
+  - Troubleshooting section
+  - Verification checklist
+
+#### Scripts
+- `backend/scripts/check_public_pages_no_tiktok.py` - Automated verification script
+  - Scans all HTML files for forbidden words
+  - Checks for: "tiktok", "Creative Center", "hashtag trend", etc.
+  - Reports line numbers and file locations
+  - Exits with error code if violations found
+
+### Files Modified
+
+#### Documentation
+- `MVP_DEPLOYMENT.md` - Added "Public Pages" section
+  - File locations and structure
+  - Nginx mapping details
+  - Cron/systemd timer setup
+  - Troubleshooting guide
+  - Monitoring instructions
+
+- `PROJECT_STATE.md` - Updated automation status
+  - Added verification status
+
+### Implementation Details
+
+#### Verification Guide Features
+- **Step 1**: Database migrations
+- **Step 2**: Data ingestion (with options for real vs test data)
+- **Step 3**: Page generation
+- **Step 4**: Manual inspection
+- **Step 5**: Automated check
+- **Step 6**: Sitemap/robots.txt verification (optional)
+- **Step 7**: Full checklist
+
+#### Automated Check Script
+- **Forbidden Words List**:
+  - "tiktok" (all cases)
+  - "creative center"
+  - "hashtag trend"
+  - "trending hashtag"
+  - "trending sound"
+  - "ads.tiktok.com"
+  - "tiktok.com"
+- **Scanning**: Recursively scans all HTML files
+- **Reporting**: Shows file, line number, and forbidden word
+- **Exit Code**: 0 on success, 1 on failure
+
+#### Public Pages Section
+- **File Locations**: Production, temp, backup directories
+- **Structure**: Directory layout and URL mapping
+- **Nginx**: Configuration details
+- **Cron/Systemd**: Setup instructions for both
+- **Troubleshooting**: Common issues and solutions
+- **Monitoring**: How to check status
+
+### Verification Process
+
+**Local Verification:**
+```bash
+# 1. Run migrations
+python -m scripts.migrate upgrade head
+
+# 2. Ingest data
+python -m scripts.run_daily_pipeline --max-keywords 5
+
+# 3. Generate pages
+python -m scripts.build_public_pages --out ./public_test --date $(date +%Y-%m-%d)
+
+# 4. Check for violations
+python -m scripts.check_public_pages_no_tiktok ./public_test
+```
+
+**Production Verification:**
+```bash
+# Before deployment
+python -m scripts.check_public_pages_no_tiktok /var/www/trendearly/public_tmp
+
+# Deploy if check passes
+python -m scripts.deploy_public_pages \
+  --source /var/www/trendearly/public_tmp \
+  --target /var/www/trendearly/public \
+  --user www-data --group www-data
+```
+
+### Verification Checklist
+
+✅ **Documentation:**
+- Step-by-step verification guide created
+- Troubleshooting section included
+- Related documentation linked
+
+✅ **Automated Checks:**
+- Script scans for forbidden words
+- Reports violations with file/line numbers
+- Exits with proper error codes
+
+✅ **Deployment Documentation:**
+- Public pages section added
+- File locations documented
+- Nginx mapping explained
+- Cron/systemd setup provided
+- Troubleshooting guide included
+
+### Notes
+- Sitemap and robots.txt are optional (not yet generated)
+- Check script can be extended with more forbidden words
+- Verification should be run before every deployment
+- Can integrate check into CI/CD pipeline
+- Monitoring can be set up to alert on check failures
 - Management script allows testing without running full application

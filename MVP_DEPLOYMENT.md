@@ -271,7 +271,15 @@ To automatically deploy after generation, add to cron job:
 
 Or integrate into the daily pipeline script (already done - pages are generated to temp dir).
 
-### 9. Set Up Daily Backups
+### 9. Public Pages
+
+See the [Public Pages section](#public-pages) below for complete details on:
+- File locations and structure
+- Nginx mapping
+- Cron/systemd setup
+- Troubleshooting
+
+### 10. Set Up Daily Backups
 
 **Create DigitalOcean Spaces bucket:**
 
