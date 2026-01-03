@@ -1226,4 +1226,101 @@
 - No code changes needed for API client (already client-compatible)
 - Archive page was already client-side, no changes needed
 - Layout uses metadata export (processed at build time, compatible with static export)
+
+---
+
+## Session: Add Schema Support for Static Public Pages
+
+**Date**: [Current Date]
+**Goal**: Add database schema fields needed for generating static public keyword pages with Google Trends data
+
+### Files Created
+
+#### Models
+
+- `backend/src/app/models/google_trends_cache.py` - New model for Google Trends time series cache
+  - Stores time series data (weekly values) as JSON
+  - Supports multiple geo/timeframe combinations per keyword
+  - Unique constraint on (keyword_id, geo, timeframe)
+  - Indexes for efficient querying
+
+#### Migrations
+
+- `backend/alembic/versions/001_add_keyword_fields_and_google_trends_cache.py` - Migration script
+  - Adds keyword_type, first_seen, last_seen to keywords table
+  - Creates google_trends_cache table
+  - Portable (SQLite + PostgreSQL compatible)
+  - Handles existing data with defaults
+
+### Files Modified
+
+#### Models
+
+- `backend/src/app/models/keyword.py` - Enhanced Keyword model
+
+  - Added `keyword_type` field (Enum: KEYWORD, HASHTAG, SOUND)
+  - Added `first_seen` field (Date, nullable)
+  - Added `last_seen` field (Date, nullable)
+  - Added relationship to GoogleTrendsCache
+
+- `backend/src/app/models/__init__.py` - Updated exports
+  - Added GoogleTrendsCache and KeywordType to exports
+
+#### Alembic Configuration
+
+- `backend/alembic/env.py` - Updated model imports
+  - Added GoogleTrendsCache to model imports for autogenerate
+
+### Schema Changes
+
+#### Keywords Table
+
+- **Added**: `keyword_type` (String/Enum, NOT NULL, default='keyword')
+- **Added**: `first_seen` (Date, nullable, indexed)
+- **Added**: `last_seen` (Date, nullable, indexed)
+
+#### Google Trends Cache Table (New)
+
+- `id` (Integer, primary key)
+- `keyword_id` (Integer, FK to keywords)
+- `geo` (String(10), default='', worldwide)
+- `timeframe` (String(50), default='today 12-m')
+- `time_series_data` (JSON, NOT NULL) - Full time series data
+- `fetched_at` (DateTime, indexed)
+- `created_at`, `updated_at` (DateTime)
+- Unique constraint: (keyword_id, geo, timeframe)
+- Indexes: keyword_id, fetched_at, (keyword_id, fetched_at)
+
+### Implementation Details
+
+#### Portable Migration
+
+- Uses batch_alter_table for SQLite compatibility
+- Handles existing data with UPDATE statements
+- Creates indexes after columns are added
+- Supports both SQLite and PostgreSQL
+
+#### Data Structure
+
+- Google Trends time series stored as JSON in google_trends_cache.time_series_data
+- Format: {"data": [{"date": "2024-01-01", "value": 50}, ...], "fetched_at": "..."}
+- Enables static page generation with full chart data
+- Separate from daily_snapshots for cleaner public page generation
+
+### Verification
+
+✅ **Schema supports static page generation:**
+
+- Keywords table has: keyword, keyword_type, first_seen, last_seen
+- Daily snapshots table has: date, momentum_score (trend_score), lift, acceleration, novelty, noise
+- Google Trends cache table has: time_series_data (JSON) with weekly values
+- All fields use portable types (String, Date, Integer, Float, JSON)
+- No database-specific features used
+
+### Notes
+
+- Migration is ready to run: `alembic upgrade head`
+- Existing keywords will get keyword_type='keyword' by default
+- Google Trends cache is separate from daily_snapshots for cleaner public pages
+- Time series data format matches pytrends output structure
 - Management script allows testing without running full application

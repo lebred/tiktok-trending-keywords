@@ -54,9 +54,11 @@ TikTok Keyword Momentum Tracker - MVP web application that identifies newly emer
 ### Storage
 
 - **Status**: ✅ Database Models Created
-- **Schema**: ✅ SQLAlchemy models implemented (keywords, daily_snapshots, users, subscriptions)
+- **Schema**: ✅ SQLAlchemy models implemented (keywords, daily_snapshots, google_trends_cache, users, subscriptions)
 - **Migrations**: ✅ Alembic configured
-- **Daily Snapshots**: To be implemented
+- **Daily Snapshots**: ✅ Implemented
+- **Google Trends Cache**: ✅ Dedicated table for time series data
+- **Keyword Metadata**: ✅ Added keyword_type, first_seen, last_seen fields
 
 ### Backend API
 

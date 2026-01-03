@@ -305,3 +305,43 @@
 - Current approach is optimal for MVP scale
 
 ---
+
+### Decision: Google Trends Cache Table for Static Pages
+
+**Date**: [Current Date]
+**Context**: Need to generate static public pages for keywords using only Google Trends data (no TikTok details)
+**Decision**:
+
+- Create dedicated `google_trends_cache` table separate from `daily_snapshots`
+- Store full time series data (weekly values) as JSON
+- Add keyword metadata fields (keyword_type, first_seen, last_seen) to keywords table
+- Support multiple geo/timeframe combinations per keyword
+
+**Rationale**:
+
+- **Separation of Concerns**: Public pages only need Google Trends data, not TikTok-specific metrics
+- **Performance**: Dedicated cache table enables fast queries for static page generation
+- **Flexibility**: Can store multiple geo/timeframe combinations for future features
+- **Data Structure**: JSON storage matches pytrends output format exactly
+- **Clean API**: Public pages can query cache table directly without joining snapshots
+
+**Schema Design**:
+
+- `google_trends_cache` table with (keyword_id, geo, timeframe) unique constraint
+- `time_series_data` JSON column stores full weekly time series
+- `keywords` table enhanced with metadata fields for public display
+- All types are portable (String, Date, Integer, JSON)
+
+**Alternatives Considered**:
+
+- Reuse daily_snapshots.google_trends_data (rejected - mixes TikTok metrics with public data)
+- Store in separate JSON files (rejected - database is more reliable and queryable)
+- Single cache entry per keyword (rejected - need geo/timeframe flexibility)
+
+**Migration Strategy**:
+
+- Portable migration handles both SQLite and PostgreSQL
+- Existing keywords get default keyword_type='keyword'
+- Cache table can be populated independently of daily pipeline
+
+---

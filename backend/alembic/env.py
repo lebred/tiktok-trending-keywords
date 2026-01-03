@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from app.models.base import Base
 from app.models.keyword import Keyword
 from app.models.daily_snapshot import DailySnapshot
+from app.models.google_trends_cache import GoogleTrendsCache
 from app.models.user import User
 from app.models.subscription import Subscription
 from app.config import settings
@@ -31,7 +32,9 @@ database_url = settings.database_url
 # SQLite requires special handling for Alembic
 if database_url.startswith("sqlite"):
     # Use check_same_thread=False for SQLite
-    config.set_main_option("sqlalchemy.url", database_url.replace("sqlite:///", "sqlite:///./"))
+    config.set_main_option(
+        "sqlalchemy.url", database_url.replace("sqlite:///", "sqlite:///./")
+    )
 else:
     config.set_main_option("sqlalchemy.url", database_url)
 
@@ -63,7 +66,7 @@ def run_migrations_offline() -> None:
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    
+
     # SQLite-specific configuration
     if url.startswith("sqlite"):
         context.configure(
@@ -93,7 +96,7 @@ def run_migrations_online() -> None:
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    
+
     # SQLite requires special connection args
     if url and url.startswith("sqlite"):
         connectable = engine_from_config(
@@ -131,4 +134,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
