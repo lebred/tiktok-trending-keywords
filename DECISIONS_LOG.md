@@ -464,3 +464,72 @@
 - **Health Endpoint**: Simple JSON response (can add DB checks later)
 
 ---
+
+### Decision: Public Pages Verification and Automated Checks
+
+**Date**: [Current Date]
+**Context**: Need to verify public pages are generated correctly and contain no TikTok mentions
+**Decision**:
+
+- Create comprehensive verification documentation
+- Implement automated script to check for forbidden words
+- Add public pages section to deployment docs
+- Include troubleshooting and monitoring guidance
+
+**Rationale**:
+
+- **Documentation**: Step-by-step guide ensures consistent verification process
+- **Automated Checks**: Prevents human error, catches violations before deployment
+- **Deployment Docs**: Centralizes all public pages information in one place
+- **Troubleshooting**: Reduces support burden, helps diagnose issues quickly
+
+**Verification Guide**:
+
+- Covers full workflow: migrations → ingestion → generation → inspection
+- Includes both manual and automated checks
+- Provides troubleshooting for common issues
+- Links to related documentation
+
+**Automated Check Script**:
+
+- Scans all HTML files recursively
+- Checks for comprehensive list of forbidden words
+- Reports violations with file and line numbers
+- Exits with error code for CI/CD integration
+
+**Forbidden Words List**:
+
+- "tiktok" (all cases)
+- "Creative Center"
+- "hashtag trend"
+- "trending hashtag/sound"
+- TikTok URLs (ads.tiktok.com, tiktok.com)
+
+**Deployment Documentation**:
+
+- File locations (production, temp, backup)
+- Nginx mapping and URL structure
+- Cron and systemd timer setup
+- Troubleshooting common issues
+- Monitoring recommendations
+
+**Alternatives Considered**:
+
+- Manual verification only (rejected - error-prone, not scalable)
+- Simple grep check (rejected - less informative, harder to maintain)
+- Separate verification repo (rejected - adds complexity)
+
+**Trade-offs**:
+
+- **Comprehensive List**: May need updates as new terms emerge (acceptable - easy to extend)
+- **Manual Inspection**: Still recommended alongside automated checks (acceptable - catches edge cases)
+- **Sitemap/Robots**: Optional for now (acceptable - can add later)
+
+**Integration Points**:
+
+- Can be run before deployment
+- Can be integrated into CI/CD pipeline
+- Can be scheduled as part of daily pipeline
+- Can be used for monitoring/alerting
+
+---

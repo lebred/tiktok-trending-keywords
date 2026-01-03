@@ -24,11 +24,13 @@ alembic upgrade head
 ```
 
 **Expected Output:**
+
 ```
 INFO  [alembic.runtime.migration] Running upgrade  -> 001_add_keyword_fields, add keyword fields and google trends cache
 ```
 
 **Verify:**
+
 ```bash
 # Check that tables exist (SQLite)
 sqlite3 data.db ".tables"
@@ -48,6 +50,7 @@ python -m scripts.fetch_trending_keywords
 ```
 
 **Expected Output:**
+
 ```
 INFO  Starting TikTok keyword ingestion
 INFO  Fetched X unique keywords
@@ -67,6 +70,7 @@ python -m scripts.run_daily_pipeline --max-keywords 5
 ```
 
 **Expected Output:**
+
 ```
 Pipeline Execution Results
 ============================================================
@@ -81,6 +85,7 @@ Success: True
 ```
 
 **Verify Data in Database:**
+
 ```bash
 # Check keywords
 sqlite3 data.db "SELECT COUNT(*) FROM keywords;"
@@ -107,6 +112,7 @@ python -m scripts.build_public_pages \
 ```
 
 **Expected Output:**
+
 ```
 INFO  Generating public pages to: ./public_test
 INFO  Using snapshot date: 2024-01-15
@@ -118,6 +124,7 @@ INFO  Successfully generated X keyword pages + index
 ```
 
 **Verify Output Structure:**
+
 ```bash
 # Check directory structure
 ls -la public_test/
@@ -144,6 +151,7 @@ xdg-open public_test/index.html  # Linux
 ```
 
 **What to Look For:**
+
 - ✅ Page title: "TrendEarly - Trending Keywords"
 - ✅ List of keywords with scores
 - ✅ Links to `/keywords/{id}/`
@@ -161,6 +169,7 @@ open public_test/keywords/1/index.html
 ```
 
 **What to Look For:**
+
 - ✅ Keyword name displayed
 - ✅ Momentum score (1-100)
 - ✅ Metrics: Lift, Acceleration, Novelty, Noise
@@ -182,6 +191,7 @@ python -m scripts.check_public_pages_no_tiktok ./public_test
 ```
 
 **Expected Output (Success):**
+
 ```
 INFO  Scanning public pages in: ./public_test
 INFO  Checking index.html
@@ -191,6 +201,7 @@ INFO  ✓ All pages passed: No TikTok mentions found
 ```
 
 **Expected Output (Failure):**
+
 ```
 ERROR  Found forbidden word in keywords/1/index.html: "TikTok"
 ERROR  ✗ Check failed: Found 1 forbidden word(s)
@@ -221,6 +232,7 @@ cat public_test/robots.txt
 ```
 
 **Expected Content (if exists):**
+
 ```
 User-agent: *
 Allow: /
@@ -252,6 +264,7 @@ Run through this checklist to ensure everything is correct:
 **Problem:** `INFO  Found 0 keywords with snapshots`
 
 **Solutions:**
+
 1. Run the daily pipeline to create snapshots:
    ```bash
    python -m scripts.run_daily_pipeline --max-keywords 5
@@ -270,6 +283,7 @@ Run through this checklist to ensure everything is correct:
 **Problem:** Charts don't display or show "No data"
 
 **Solutions:**
+
 1. Check Google Trends cache:
    ```bash
    sqlite3 data.db "SELECT COUNT(*) FROM google_trends_cache;"
@@ -288,6 +302,7 @@ Run through this checklist to ensure everything is correct:
 **Problem:** Check script finds TikTok mentions
 
 **Solutions:**
+
 1. Review the generated HTML files:
    ```bash
    grep -r -i "tiktok" public_test/
@@ -301,6 +316,7 @@ Run through this checklist to ensure everything is correct:
 **Problem:** 404 errors or blank pages
 
 **Solutions:**
+
 1. Check file permissions:
    ```bash
    ls -la public_test/keywords/1/index.html
@@ -320,11 +336,13 @@ Run through this checklist to ensure everything is correct:
 After local verification:
 
 1. **Deploy to Production:**
+
    - Generate pages to production directory
    - Run automated check
    - Deploy using atomic swap script
 
 2. **Set Up Automation:**
+
    - Configure cron job for daily generation
    - Set up monitoring/alerting for failures
 
@@ -339,4 +357,3 @@ After local verification:
 - `backend/scripts/build_public_pages.py` - Page generation script
 - `backend/scripts/check_public_pages_no_tiktok.py` - Automated check script
 - `backend/scripts/deploy_public_pages.py` - Deployment script
-

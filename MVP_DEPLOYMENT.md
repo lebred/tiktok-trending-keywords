@@ -274,6 +274,7 @@ Or integrate into the daily pipeline script (already done - pages are generated 
 ### 9. Public Pages
 
 See the [Public Pages section](#public-pages) below for complete details on:
+
 - File locations and structure
 - Nginx mapping
 - Cron/systemd setup
