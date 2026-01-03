@@ -13,7 +13,9 @@ export default function KeywordDetailPageClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const id = params?.id ? Number(params.id) : NaN;
+  // Handle catch-all route: params.id is an array, take first element
+  const idParam = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const id = idParam ? Number(idParam) : NaN;
 
   useEffect(() => {
     if (!Number.isFinite(id)) {
