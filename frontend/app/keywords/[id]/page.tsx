@@ -1,86 +1,20 @@
-'use client';
+import KeywordDetailClientPage from './KeywordDetailClientPage';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { api, KeywordDetail, KeywordHistory } from '@/lib/api';
-import KeywordDetailClient from '@/components/KeywordDetailClient';
+// MVP: pre-generate a fixed number of keyword pages.
+// Increase/decrease depending on how many keyword IDs you expect.
+const MAX_EXPORTED_KEYWORD_PAGES = 500;
 
-export default function KeywordDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const [keyword, setKeyword] = useState<KeywordDetail | null>(null);
-  const [history, setHistory] = useState<KeywordHistory | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const id = params?.id ? Number(params.id) : NaN;
-
-  useEffect(() => {
-    if (!Number.isFinite(id) || id <= 0) {
-
-      setError('Invalid keyword ID');
-      setIsLoading(false);
-      return;
-    }
-
-    async function fetchData() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const [keywordData, historyData] = await Promise.all([
-          api.getKeyword(id),
-          api.getKeywordHistory(id, 90).catch(() => null), // Last 90 days, allow failure
-        ]);
-        setKeyword(keywordData);
-        setHistory(historyData);
-      } catch (err) {
-        console.error('Error fetching keyword data:', err);
-        setError('Failed to load keyword data');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, [id]);
-
-  if (isLoading) {
-    return (
-      <main className="min-h-screen py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      </main>
-    );
-  }
-  if (error || !keyword) {
-    return (
-      <main className="min-h-screen py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">{error || 'Keyword not found'}</p>
-            <button
-              onClick={() => router.push('/')}
-              className="mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              ← Back to Home
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  return (
-    <main className="min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <KeywordDetailClient keyword={keyword} history={history} />
-      </div>
-    </main>
-  );
+export async function generateStaticParams() {
+  // Generates: /keywords/1/ ... /keywords/500/
+  return Array.from({ length: MAX_EXPORTED_KEYWORD_PAGES }, (_, i) => ({
+    id: String(i + 1),
+  }));
 }
 
+export default function KeywordDetailPage({ params }: { params: { id: string } }) {
+  const idNum = Number(params.id);
 
-
+  // Even though this is statically generated, keep a guard.
+  // If someone requests a bad page, they'll just see the client error UI.
+  return <KeywordDetailClientPage id={Number.isFinite(idNum) ? idNum : NaN} />;
+}

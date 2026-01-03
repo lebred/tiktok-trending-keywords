@@ -1,22 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { api, KeywordDetail, KeywordHistory } from '@/lib/api';
 import KeywordDetailClient from '@/components/KeywordDetailClient';
 
-export default function KeywordDetailPage() {
-  const params = useParams();
+export default function KeywordDetailClientPage({ id }: { id: number }) {
   const router = useRouter();
   const [keyword, setKeyword] = useState<KeywordDetail | null>(null);
   const [history, setHistory] = useState<KeywordHistory | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const id = params?.id ? Number(params.id) : NaN;
-
   useEffect(() => {
-    if (!Number.isFinite(id)) {
+    if (!Number.isFinite(id) || id <= 0) {
       setError('Invalid keyword ID');
       setIsLoading(false);
       return;
@@ -26,10 +23,12 @@ export default function KeywordDetailPage() {
       try {
         setIsLoading(true);
         setError(null);
+
         const [keywordData, historyData] = await Promise.all([
           api.getKeyword(id),
-          api.getKeywordHistory(id, 90).catch(() => null), // Last 90 days, allow failure
+          api.getKeywordHistory(id, 90).catch(() => null),
         ]);
+
         setKeyword(keywordData);
         setHistory(historyData);
       } catch (err) {
@@ -39,6 +38,7 @@ export default function KeywordDetailPage() {
         setIsLoading(false);
       }
     }
+
     fetchData();
   }, [id]);
 
@@ -81,5 +81,4 @@ export default function KeywordDetailPage() {
     </main>
   );
 }
-
 
