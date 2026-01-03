@@ -6,9 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "export": "next export",
+    "build:export": "next build && next export",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf node_modules .next package-lock.json out"
+    "clean": "rm -rf node_modules .next package-lock.json out",
+    "reinstall": "npm run clean && npm install && npm ls next"
   },
   "dependencies": {
     "next": "14.0.4",
