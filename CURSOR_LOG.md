@@ -1734,7 +1734,9 @@ python -m scripts.deploy_public_pages \
 ### Files Modified
 
 #### Documentation
+
 - `DEPLOYMENT.md` - Completely rewritten and consolidated (1072 lines)
+
   - Added "Quick Start: MVP" section at the top
   - Streamlined MVP deployment steps (from MVP_DEPLOYMENT.md)
   - Comprehensive production deployment section (App Platform + PostgreSQL)
@@ -1743,12 +1745,15 @@ python -m scripts.deploy_public_pages \
   - Eliminated all duplication
 
 - `docs/VERIFY_PUBLIC_PAGES.md` - Updated reference
+
   - Changed reference from MVP_DEPLOYMENT.md to DEPLOYMENT.md
 
 - `README.md` - Updated reference
+
   - Clarified that DEPLOYMENT.md covers both MVP and Production
 
 - `SQLITE_SAFETY_FIXES.md` - Updated reference
+
   - Removed reference to MVP_DEPLOYMENT.md
 
 - `CURSOR_LOG.md` - Updated all historical references
@@ -1807,6 +1812,7 @@ python -m scripts.deploy_public_pages \
 ### Critical Fixes Applied
 
 #### 1. Removed Node.js from MVP Droplet
+
 - Removed Node.js installation from Step 2 (server setup)
 - Added note: "Node.js is NOT needed on the server"
 - Frontend build happens locally/CI, static files copied to server
@@ -1814,24 +1820,28 @@ python -m scripts.deploy_public_pages \
 - Removed port 3000 references for MVP droplet
 
 #### 2. Normalized Naming
+
 - Changed "TikTok Keyword Momentum Tracker" → "TrendEarly" in user-facing sections
 - Standardized service name: `trendearly-backend.service` (was `tiktok-backend.service`)
 - Standardized health check: `/api/health` everywhere (removed `/health` references)
 - Changed user name: `tiktok` → `trendearly` for consistency
 
 #### 3. Fixed Public Pages URL Structure
+
 - Documented actual implementation: `/keywords/{id}/` with numeric IDs
 - Added note about future enhancement to `/k/<slug>/`
 - Documented sitemap.xml and robots.txt locations
 - Clarified file structure matches code
 
 #### 4. Fixed Nginx Mapping
+
 - Reordered locations: `/api/` MUST come before root `/` location
 - Added `/app` location for paid UI (static files)
 - Ensured try_files doesn't break `/api/` routing
 - Updated deploy/nginx/trendearly.xyz.conf to match
 
 #### 5. Made Daily Automation Clear and Safe
+
 - Documented recommended order:
   1. 2:00 AM UTC: Pipeline runs (writes DB)
   2. 2:05 AM UTC: Public pages generated
@@ -1845,12 +1855,14 @@ python -m scripts.deploy_public_pages \
 ### Improvements Added
 
 #### 6. Static Frontend Build + Deploy Section
+
 - Clear instructions: build locally/CI, copy to server
 - Optional: one-time build on server then remove Node.js
 - Clarified `/app` route is optional
 - Public pages don't require Node.js
 
 #### 7. Common Pitfalls Box
+
 - Always run `nginx -t` before reload
 - Disk space monitoring
 - SQLite locked: avoid overlapping operations
@@ -1858,6 +1870,7 @@ python -m scripts.deploy_public_pages \
 - Frontend build artifacts verification
 
 #### 8. Reduced Duplication
+
 - Single canonical cron command for each job
 - Removed repeated explanations
 - Consolidated scheduler documentation
@@ -1866,7 +1879,9 @@ python -m scripts.deploy_public_pages \
 ### Files Modified
 
 #### Documentation
+
 - `DEPLOYMENT.md` - Complete rewrite (1,103 lines)
+
   - Removed all Node.js/server references for MVP
   - Normalized naming (TrendEarly, trendearly-backend)
   - Fixed URL structure documentation
@@ -1878,6 +1893,7 @@ python -m scripts.deploy_public_pages \
   - Reduced duplication
 
 - `deploy/nginx/trendearly.xyz.conf` - Fixed location order
+
   - Moved `/api/` location before root `/` location
   - Added `/app` location for paid UI
   - Ensured proper routing priority
@@ -1888,6 +1904,7 @@ python -m scripts.deploy_public_pages \
 ### Key Changes Summary
 
 **Before:**
+
 - Mixed references to Node.js on server
 - Inconsistent service names (tiktok-backend vs trendearly-backend)
 - Mixed health check paths
@@ -1895,6 +1912,7 @@ python -m scripts.deploy_public_pages \
 - Nginx location order could break `/api/`
 
 **After:**
+
 - Clear: No Node.js on MVP droplet (build locally/CI)
 - Consistent: trendearly-backend.service, /api/health
 - Clear daily automation sequence with safe timing
@@ -1905,26 +1923,31 @@ python -m scripts.deploy_public_pages \
 ### Validation
 
 ✅ **Architecture Consistency:**
+
 - MVP droplet: Backend (FastAPI) + Static files (Nginx) + SQLite
 - No Node.js runtime on server
 - Frontend built locally/CI, copied as static files
 
 ✅ **Naming Consistency:**
+
 - TrendEarly in user-facing sections
 - trendearly-backend.service everywhere
 - /api/health everywhere
 
 ✅ **URL Structure:**
+
 - Documented actual implementation (/keywords/{id}/)
 - Nginx mapping matches structure
 - /api/ routing protected
 
 ✅ **Daily Automation:**
+
 - Clear sequence with safe timing
 - APScheduler primary, cron optional
 - All times UTC, consistent
 
 ✅ **Documentation Quality:**
+
 - Common pitfalls added
 - Validation checklist added
 - Reduced duplication

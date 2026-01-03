@@ -57,6 +57,7 @@ Cost: ~$12/month + Spaces ($5/month) = $17-20/month
 ```
 
 **Key Points:**
+
 - **No Node.js server** on droplet - frontend is pre-built static files
 - **Nginx serves** all static content directly
 - **FastAPI backend** runs on localhost:8000, proxied via Nginx
@@ -313,6 +314,7 @@ sudo systemctl reload nginx
 **Configuration Details:**
 
 The Nginx config (`deploy/nginx/trendearly.xyz.conf`) includes:
+
 - **Root**: `/var/www/trendearly/public` (static public pages)
 - **API Proxy**: `/api/*` → `http://127.0.0.1:8000`
 - **App Route**: `/app/*` → `/var/www/trendearly/app` (optional)
@@ -412,6 +414,7 @@ python -m scripts.deploy_public_pages \
 The backend service automatically runs the daily pipeline via APScheduler when `DEBUG=False`. No additional setup needed.
 
 **Schedule:**
+
 - **Pipeline**: Runs daily at 2:00 AM UTC
 - **Public Pages**: Generated automatically after pipeline completes
 - **Deployment**: Manual or via cron (see below)
@@ -430,6 +433,7 @@ crontab -e
 **Or use systemd timer** (more robust):
 
 Create `/etc/systemd/system/trendearly-deploy-pages.service`:
+
 ```ini
 [Unit]
 Description=Deploy TrendEarly Public Pages
@@ -443,6 +447,7 @@ ExecStart=/home/trendearly/tiktok-trending-keywords/backend/venv/bin/python -m s
 ```
 
 Create `/etc/systemd/system/trendearly-deploy-pages.timer`:
+
 ```ini
 [Unit]
 Description=Deploy TrendEarly Public Pages Daily
@@ -457,6 +462,7 @@ WantedBy=timers.target
 ```
 
 Enable:
+
 ```bash
 sudo systemctl enable trendearly-deploy-pages.timer
 sudo systemctl start trendearly-deploy-pages.timer
@@ -522,27 +528,32 @@ sudo systemctl restart trendearly-backend
 ### Common Pitfalls
 
 **⚠️ Always run `nginx -t` before reload:**
+
 ```bash
 sudo nginx -t  # Must pass before reloading
 sudo systemctl reload nginx
 ```
 
 **⚠️ Disk space monitoring:**
+
 - Monitor `/var/log/` for log growth
 - Monitor `/var/www/trendearly/public_tmp` (cleanup old temp dirs)
 - Monitor database size: `du -h /var/lib/tiktok-tracker/data.db`
 
 **⚠️ SQLite locked errors:**
+
 - Ensure backups run AFTER pipeline completes (3:00 AM, not 2:00 AM)
 - Don't run manual pipeline and backup simultaneously
 - If locked, wait for current operation to finish
 
 **⚠️ Permissions under /var/www/trendearly:**
+
 - Ensure `trendearly` user can write to `public_tmp`
 - Ensure `www-data` can read from `public` and `app`
 - Use deploy script to set correct ownership
 
 **⚠️ Frontend build artifacts:**
+
 - Build happens locally/CI, not on server
 - Copy only `frontend/out/*` contents, not the `out/` directory itself
 - Verify files exist: `ls -la /var/www/trendearly/app/index.html`
@@ -596,6 +607,7 @@ sudo certbot certificates
 ### When to Use Production Setup
 
 Migrate to production setup when you need:
+
 - Multiple app instances (horizontal scaling)
 - High write concurrency
 - Advanced database features
@@ -622,11 +634,13 @@ Migrate to production setup when you need:
 ### Step 3: Deploy Backend on App Platform
 
 1. **Connect Repository**
+
    - Go to App Platform → Create App
    - Connect your GitHub repository
    - Select the repository and branch
 
 2. **Configure Backend Component**
+
    - **Type**: Web Service
    - **Source Directory**: `backend`
    - **Build Command**:
@@ -640,6 +654,7 @@ Migrate to production setup when you need:
    - **HTTP Port**: 8080 (or use $PORT variable)
 
 3. **Environment Variables**
+
    - Add all backend environment variables (see [Environment Variables](#environment-variables) section)
    - Set `DATABASE_URL` to PostgreSQL connection string
 
@@ -650,6 +665,7 @@ Migrate to production setup when you need:
 ### Step 4: Deploy Frontend on App Platform
 
 1. **Add Frontend Component**
+
    - In same app or separate app
    - **Type**: Web Service
    - **Source Directory**: `frontend`
@@ -746,6 +762,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 ## Stripe Webhook Configuration
 
 1. **Get Webhook Secret**
+
    - Go to Stripe Dashboard → Developers → Webhooks
    - Click "Add endpoint"
    - **Endpoint URL**: `https://trendearly.xyz/api/stripe/webhook`
@@ -802,16 +819,19 @@ tail -f /var/log/trendearly/backup.log
 **Daily Automated Backup to Spaces:**
 
 1. **Set up DigitalOcean Spaces:**
+
    - Create Spaces bucket
    - Generate access keys
    - Set environment variables (see Step 11 above)
 
 2. **Install backup dependencies:**
+
    ```bash
    pip install boto3
    ```
 
 3. **Set up cron job:**
+
    ```bash
    crontab -e
    # Daily backup at 3:00 AM UTC (after pipeline completes)
@@ -826,6 +846,7 @@ tail -f /var/log/trendearly/backup.log
    ```
 
 **Backup Retention:**
+
 - Keep last 7 days of backups
 - Monthly backups for long-term retention
 - Test restore procedure regularly
@@ -833,10 +854,12 @@ tail -f /var/log/trendearly/backup.log
 ### PostgreSQL Backups (Production)
 
 DigitalOcean Managed PostgreSQL:
+
 - Automatic daily backups (included)
 - Retention: 7 days (can upgrade)
 
 Manual backups:
+
 ```bash
 pg_dump $DATABASE_URL > backup_$(date +%Y%m%d).sql
 ```
@@ -986,6 +1009,7 @@ psql $DATABASE_URL
 - **Total: ~$17-20/month** ✅ (typical cost)
 
 Compare to production setup:
+
 - App Platform: ~$12/month
 - Managed PostgreSQL: ~$15/month minimum
 - **Total: ~$27/month minimum**
