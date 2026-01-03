@@ -252,20 +252,32 @@ sudo journalctl -u trendearly-backend -f
 ```bash
 # On your local machine or CI
 cd frontend
+
+# Set API URL at build time (or use .env.local)
+export NEXT_PUBLIC_API_URL=https://trendearly.xyz/api
+
+# Install dependencies and build
 npm ci
 npm run build
 
 # This creates frontend/out/ directory with static files
+# Verify: Check that out/_next/ paths are prefixed with /app/
 ```
 
 **Copy to server:**
 
 ```bash
 # From your local machine
+# Note: Copy contents of out/, not the out/ directory itself
 scp -r frontend/out/* trendearly@your-droplet-ip:/var/www/trendearly/app/
 
-# Or use rsync
+# Or use rsync (recommended - preserves structure)
 rsync -avz frontend/out/ trendearly@your-droplet-ip:/var/www/trendearly/app/
+
+# Verify after copy:
+# - /var/www/trendearly/app/index.html exists
+# - /var/www/trendearly/app/_next/ directory exists
+# - Asset paths in HTML should be /app/_next/...
 ```
 
 **Or build on server (one-time, then remove Node.js):**
@@ -275,13 +287,18 @@ rsync -avz frontend/out/ trendearly@your-droplet-ip:/var/www/trendearly/app/
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt install -y nodejs
 
-# Build
+# Build (set API URL first)
+export NEXT_PUBLIC_API_URL=https://trendearly.xyz/api
 cd frontend
 npm ci
 npm run build
 
-# Copy to app directory
+# Copy to app directory (contents of out/, not out/ itself)
 cp -r out/* /var/www/trendearly/app/
+
+# Verify build output
+ls -la /var/www/trendearly/app/index.html
+ls -la /var/www/trendearly/app/_next/
 
 # Optional: Remove Node.js if not needed
 # sudo apt remove nodejs
@@ -563,8 +580,10 @@ sudo systemctl reload nginx
 **⚠️ Frontend build artifacts:**
 
 - Build happens locally/CI, not on server
+- Set `NEXT_PUBLIC_API_URL` at build time (or use `.env.local`)
 - Copy only `frontend/out/*` contents, not the `out/` directory itself
 - Verify files exist: `ls -la /var/www/trendearly/app/index.html`
+- Verify asset paths: Check HTML for `/app/_next/` paths (not `/_next/`)
 
 ### MVP Validation Checklist
 
@@ -608,6 +627,11 @@ sudo systemctl status nginx
 # 9. SSL certificate valid
 sudo certbot certificates
 # Expected: Valid certificate listed
+
+# 10. Frontend assets (if /app route exists)
+curl -I https://trendearly.xyz/app/
+# Expected: HTTP/1.1 200 OK
+# Verify asset paths in HTML: should be /app/_next/... (not /_next/...)
 ```
 
 ## Production Deployment (App Platform + PostgreSQL)
