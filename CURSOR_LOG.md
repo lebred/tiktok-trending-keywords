@@ -1454,4 +1454,136 @@ python -m scripts.deploy_public_pages \
 - Chart.js loaded from CDN (no local dependencies)
 - Static HTML works with any web server
 - Can be served from CDN for better performance
+
+---
+
+## Session: Production Nginx Configuration and Backend Security
+
+**Date**: [Current Date]
+**Goal**: Create production-ready Nginx configuration and ensure backend routes match with proper CORS and health endpoints
+
+### Files Created
+
+#### Nginx Configuration
+
+- `deploy/nginx/trendearly.xyz.conf` - Production Nginx configuration
+  - Serves static public pages from `/var/www/trendearly/public`
+  - Reverse proxy `/api/*` to FastAPI backend
+  - Gzip compression enabled
+  - Caching headers for static assets and HTML
+  - Security headers (X-Frame-Options, X-Content-Type-Options, etc.)
+  - SSL configuration (commented, for certbot)
+  - Optional `/app` location for paid frontend
+  - Denies access to hidden/backup files
+
+### Files Modified
+
+#### Backend
+
+- `backend/src/app/main.py` - Updated CORS and health endpoints
+  - **CORS Configuration**:
+    - Development: Allows localhost:3000
+    - Production: Restricted to trendearly.xyz and www.trendearly.xyz
+    - Uses settings.debug to determine environment
+    - Filters out localhost in production
+  - **Health Endpoints**:
+    - Added `/api/health` endpoint for monitoring
+    - Kept `/health` for backward compatibility
+    - Both return JSON status
+
+#### Documentation
+
+- `MVP_DEPLOYMENT.md` - Updated Nginx setup instructions
+
+  - References new config file location
+  - Updated SSL setup instructions
+  - Added certbot verification steps
+
+- `PROJECT_STATE.md` - Updated API status
+  - Added `/api/health` endpoint
+  - Noted CORS configuration
+  - Added security features
+
+### Implementation Details
+
+#### Nginx Configuration Features
+
+- **Root Location**: `/var/www/trendearly/public` (public pages)
+- **API Proxy**: `/api/*` → `http://127.0.0.1:8000`
+- **Caching Strategy**:
+  - Static assets (CSS, JS, images): 1 year
+  - HTML pages: 1 hour
+  - API endpoints: No cache
+- **Gzip**: Enabled for text-based files
+- **Security Headers**: Basic set (X-Frame-Options, X-Content-Type-Options, etc.)
+- **SSL Ready**: Commented SSL block for certbot
+
+#### CORS Configuration
+
+- **Development Mode** (`DEBUG=True`):
+  - Allows: `http://localhost:3000`, `http://127.0.0.1:3000`
+- **Production Mode** (`DEBUG=False`):
+  - Allows: `https://trendearly.xyz`, `https://www.trendearly.xyz`
+  - Also includes `frontend_url` from settings
+  - Filters out localhost origins
+- **Methods**: GET, POST, PUT, DELETE, OPTIONS
+- **Credentials**: Enabled (for authentication cookies)
+
+#### Health Endpoints
+
+- `/api/health`: Primary health check for monitoring
+  - Returns: `{"status": "healthy", "service": "api"}`
+- `/health`: Legacy endpoint (backward compatibility)
+  - Returns: `{"status": "healthy"}`
+
+### Configuration Files
+
+**Nginx Config Location:**
+
+```
+deploy/nginx/trendearly.xyz.conf
+```
+
+**Installation:**
+
+```bash
+sudo cp deploy/nginx/trendearly.xyz.conf /etc/nginx/sites-available/trendearly.xyz
+sudo ln -s /etc/nginx/sites-available/trendearly.xyz /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+**SSL Setup:**
+
+```bash
+sudo certbot --nginx -d trendearly.xyz -d www.trendearly.xyz
+```
+
+### Verification
+
+✅ **Nginx Configuration:**
+
+- Serves public pages from root
+- Proxies API requests correctly
+- Includes security headers
+- SSL-ready configuration
+
+✅ **Backend CORS:**
+
+- Restricted to domain in production
+- Allows localhost in development
+- Properly configured for authentication
+
+✅ **Health Endpoints:**
+
+- `/api/health` available for monitoring
+- Legacy `/health` maintained for compatibility
+
+### Notes
+
+- Nginx config includes commented SSL block for certbot
+- CORS automatically adjusts based on DEBUG setting
+- Health endpoint can be used by monitoring tools
+- Security headers are basic but sufficient for MVP
+- Can add more security headers (CSP, HSTS) later if needed
 - Management script allows testing without running full application

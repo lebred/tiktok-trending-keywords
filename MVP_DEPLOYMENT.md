@@ -171,51 +171,62 @@ sudo systemctl status tiktok-frontend
 
 ### 6. Configure Nginx
 
-```bash
-sudo nano /etc/nginx/sites-available/tiktok-tracker
-```
-
-```nginx
-server {
-    listen 80;
-    server_name trendearly.xyz;
-
-    # Frontend - static files
-    root /home/tiktok/tiktok-trending-keywords/frontend/out;
-    index index.html;
-    location / {
-        try_files $uri $uri/ $uri.html /index.html;
-    }
-
-    # Cache static assets
-    location /_next/static {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Backend API
-    location /api {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
+**Use the production-ready configuration:**
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/tiktok-tracker /etc/nginx/sites-enabled/
+# Copy the Nginx config from the repository
+sudo cp /path/to/tiktok-trending-keywords/deploy/nginx/trendearly.xyz.conf /etc/nginx/sites-available/trendearly.xyz
+
+# Create symlink
+sudo ln -s /etc/nginx/sites-available/trendearly.xyz /etc/nginx/sites-enabled/
+
+# Test configuration
 sudo nginx -t
+
+# Reload Nginx
 sudo systemctl reload nginx
 ```
 
+**Configuration Details:**
+
+The Nginx config (`deploy/nginx/trendearly.xyz.conf`) includes:
+
+- **Root**: `/var/www/trendearly/public` (static public pages)
+- **API Proxy**: `/api/*` → `http://127.0.0.1:8000`
+- **Gzip compression**: Enabled for text-based files
+- **Caching**: Static assets (1y), HTML pages (1h), API (no cache)
+- **Security headers**: X-Frame-Options, X-Content-Type-Options, etc.
+- **SSL ready**: Commented SSL block for after certbot setup
+
+**Note**: The config serves public pages from the root (`/`) and the API from `/api/`. Make sure public pages are generated to `/var/www/trendearly/public` before starting Nginx.
+
 ### 7. Set Up SSL
+
+**Install Certbot:**
 
 ```bash
 sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d trendearly.xyz
 ```
+
+**Obtain SSL Certificate:**
+
+```bash
+sudo certbot --nginx -d trendearly.xyz -d www.trendearly.xyz
+```
+
+**Note**: After running certbot, it will automatically update the Nginx configuration to enable SSL. The config file includes commented SSL blocks that certbot will uncomment and configure.
+
+**Verify SSL:**
+
+```bash
+# Test certificate renewal
+sudo certbot renew --dry-run
+
+# Check certificate status
+sudo certbot certificates
+```
+
+**Auto-renewal**: Certbot sets up automatic renewal via systemd timer. Certificates renew automatically 30 days before expiration.
 
 ### 8. Set Up Public Pages Generation
 

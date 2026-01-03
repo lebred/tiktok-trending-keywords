@@ -64,6 +64,7 @@ TikTok Keyword Momentum Tracker - MVP web application that identifies newly emer
 
 - **Status**: ✅ Core Endpoints Implemented
 - **Endpoints**:
+  - GET /api/health - Health check endpoint
   - GET /api/keywords - List keywords with pagination
   - GET /api/keywords/{id} - Keyword details
   - GET /api/keywords/{id}/history - Score history
@@ -71,7 +72,8 @@ TikTok Keyword Momentum Tracker - MVP web application that identifies newly emer
   - GET /api/archive/{date} - Historical snapshot
   - GET /api/archive - List available dates
 - **Features**: Pagination, filtering, Pydantic schemas
-- **Note**: Authentication middleware to be added in Phase 8
+- **CORS**: ✅ Configured for production (restricted to trendearly.xyz)
+- **Security**: ✅ Production CORS restrictions, security headers
 
 ### Website
 

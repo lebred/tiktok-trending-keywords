@@ -401,3 +401,66 @@
 - Can be served from separate domain/subdomain
 
 ---
+
+### Decision: Production Nginx Configuration and CORS Security
+
+**Date**: [Current Date]
+**Context**: Setting up production-ready Nginx configuration and securing backend API with proper CORS
+**Decision**:
+
+- Create production Nginx config file in repository
+- Serve public pages from root (`/`)
+- Proxy API requests from `/api/*` to FastAPI backend
+- Configure CORS dynamically based on environment (debug mode)
+- Add `/api/health` endpoint for monitoring
+
+**Rationale**:
+
+- **Repository Config**: Keeps production config version-controlled and documented
+- **Root Public Pages**: SEO-friendly URLs (trendearly.xyz/keywords/123/)
+- **API Proxy**: Standard `/api/*` pattern for API routes
+- **Dynamic CORS**: Automatically adjusts for dev vs production
+- **Health Endpoint**: Needed for monitoring and load balancer health checks
+
+**Nginx Configuration**:
+
+- Serves static public pages from `/var/www/trendearly/public`
+- Reverse proxy `/api/*` to `http://127.0.0.1:8000`
+- Gzip compression for text-based files
+- Caching: Static assets (1y), HTML (1h), API (no cache)
+- Basic security headers (X-Frame-Options, X-Content-Type-Options)
+- SSL-ready (commented block for certbot)
+
+**CORS Strategy**:
+
+- **Development**: Allow localhost:3000 for development
+- **Production**: Restrict to trendearly.xyz and www.trendearly.xyz
+- **Dynamic**: Uses `settings.debug` to determine environment
+- **Credentials**: Enabled for authentication cookies
+
+**Health Endpoints**:
+
+- `/api/health`: Primary endpoint for monitoring
+- `/health`: Legacy endpoint (backward compatibility)
+
+**Alternatives Considered**:
+
+- Separate Nginx config per environment (rejected - single config with comments is simpler)
+- Wildcard CORS in production (rejected - security risk)
+- No health endpoint (rejected - needed for monitoring)
+- Serve API directly (rejected - Nginx provides better security and caching)
+
+**Security Considerations**:
+
+- CORS restricted to actual domain in production
+- Security headers prevent common attacks
+- Hidden files denied access
+- SSL ready for HTTPS enforcement
+
+**Trade-offs**:
+
+- **Single Config**: Works for both HTTP and HTTPS (with certbot modifications)
+- **Basic Security Headers**: Sufficient for MVP, can add more later
+- **Health Endpoint**: Simple JSON response (can add DB checks later)
+
+---

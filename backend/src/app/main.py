@@ -19,13 +19,38 @@ app = FastAPI(
     debug=settings.debug,
 )
 
-# CORS middleware (configure for production)
+# CORS middleware
+# In production, restrict to actual domain
+# In development, allow localhost
+allowed_origins = []
+if settings.debug:
+    # Development: allow localhost
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+else:
+    # Production: restrict to domain
+    allowed_origins = [
+        "https://trendearly.xyz",
+        "https://www.trendearly.xyz",
+        # Also allow frontend_url if set (for magic links)
+        settings.frontend_url,
+    ]
+    # Remove duplicates and filter out localhost in production
+    allowed_origins = [
+        origin
+        for origin in set(allowed_origins)
+        if origin and not origin.startswith("http://localhost")
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include API routers
@@ -67,11 +92,17 @@ async def shutdown_event():
 
 @app.get("/")
 async def root():
-    """Health check endpoint."""
+    """Root endpoint."""
     return {"status": "ok", "message": "TikTok Keyword Momentum Tracker API"}
 
 
 @app.get("/health")
 async def health():
-    """Health check endpoint."""
+    """Health check endpoint (legacy, use /api/health)."""
     return {"status": "healthy"}
+
+
+@app.get("/api/health")
+async def api_health():
+    """API health check endpoint for monitoring."""
+    return {"status": "healthy", "service": "api"}
