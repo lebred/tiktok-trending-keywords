@@ -1323,4 +1323,119 @@
 - Existing keywords will get keyword_type='keyword' by default
 - Google Trends cache is separate from daily_snapshots for cleaner public pages
 - Time series data format matches pytrends output structure
+
+---
+
+## Session: Integrate Static Public Page Generator into Daily Pipeline
+
+**Date**: [Current Date]
+**Goal**: Integrate static public page generation into daily automation with safe deployment
+
+### Files Created
+
+#### Scripts
+- `backend/scripts/build_public_pages.py` - Static public page generator
+  - Generates HTML pages for each keyword
+  - Creates index page listing all keywords
+  - Uses Google Trends data from google_trends_cache table
+  - Includes Chart.js for time series visualization
+  - Outputs to specified directory
+
+- `backend/scripts/deploy_public_pages.py` - Safe deployment script
+  - Atomic swap deployment (no partial updates)
+  - Process: temp -> backup current -> move temp to public -> remove backup
+  - Sets ownership and permissions
+  - Handles errors gracefully with rollback
+
+### Files Modified
+
+#### Configuration
+- `backend/src/app/config.py` - Added public_pages_dir setting
+  - Default: `./public_generated` (local)
+  - Production: `/var/www/trendearly/public`
+
+#### Daily Pipeline
+- `backend/src/app/services/daily_pipeline.py` - Integrated public page generation
+  - Step 5: Generate static public pages after scoring
+  - Generates to temp directory (`{public_pages_dir}_tmp`)
+  - Non-blocking (errors don't stop pipeline)
+  - Logs generation status
+
+#### Documentation
+- `MVP_DEPLOYMENT.md` - Updated with public pages setup
+  - Configuration instructions
+  - Nginx configuration for /public route
+  - Deployment script usage
+  - Note about Google Trends-only data
+
+- `PROJECT_STATE.md` - Updated automation status
+
+### Implementation Details
+
+#### Public Page Generation
+- **Data Source**: google_trends_cache table (worldwide, 12 months)
+- **Content**: Keyword name, score, metrics, Google Trends chart
+- **No TikTok Data**: Public pages only show Google Trends signals
+- **Format**: Static HTML with embedded Chart.js
+- **Structure**: `/keywords/{id}/index.html` for each keyword
+
+#### Atomic Deployment
+- **Process**:
+  1. Generate to temp directory
+  2. Backup current public directory
+  3. Move temp to public (atomic)
+  4. Remove backup
+- **Safety**: Rollback on failure
+- **Permissions**: Sets ownership and 755 permissions
+
+#### Daily Pipeline Integration
+- Runs automatically after scoring completes
+- Generates to temp directory
+- Manual deployment step required (or add to cron)
+- Non-blocking (errors logged but don't fail pipeline)
+
+### Configuration
+
+**Environment Variable:**
+```bash
+PUBLIC_PAGES_DIR=/var/www/trendearly/public
+```
+
+**Manual Generation:**
+```bash
+python -m scripts.build_public_pages --out /var/www/trendearly/public_tmp --date 2024-01-15
+```
+
+**Deployment:**
+```bash
+python -m scripts.deploy_public_pages \
+  --source /var/www/trendearly/public_tmp \
+  --target /var/www/trendearly/public \
+  --user www-data --group www-data
+```
+
+### Verification
+
+✅ **Daily pipeline integration:**
+- Public pages generated after scoring
+- Temp directory created
+- Errors handled gracefully
+- Status logged in pipeline results
+
+✅ **Safe deployment:**
+- Atomic swap prevents partial updates
+- Backup and rollback on failure
+- Correct permissions set
+
+✅ **Documentation:**
+- MVP_DEPLOYMENT.md updated
+- Configuration instructions included
+- Nginx setup documented
+
+### Notes
+- Public pages are generated but not automatically deployed (manual step or cron)
+- Pages contain only Google Trends data (no TikTok details)
+- Chart.js loaded from CDN (no local dependencies)
+- Static HTML works with any web server
+- Can be served from CDN for better performance
 - Management script allows testing without running full application

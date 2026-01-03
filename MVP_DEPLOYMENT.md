@@ -94,6 +94,9 @@ STRIPE_PRICE_ID=price_...
 APP_NAME=TikTok Keyword Momentum Tracker
 DEBUG=False
 FRONTEND_URL=https://trendearly.xyz
+
+# Public Pages (static HTML generation)
+PUBLIC_PAGES_DIR=/var/www/trendearly/public
 ```
 
 ### 4. Initialize Database
@@ -214,7 +217,46 @@ sudo apt install certbot python3-certbot-nginx -y
 sudo certbot --nginx -d trendearly.xyz
 ```
 
-### 8. Set Up Daily Backups
+### 8. Set Up Public Pages Generation
+
+The daily pipeline automatically generates static public pages after scoring completes.
+
+**Configure Public Pages Directory:**
+
+Add to `.env`:
+```bash
+PUBLIC_PAGES_DIR=/var/www/trendearly/public
+```
+
+**Manual Generation (Optional):**
+```bash
+cd backend
+source venv/bin/activate
+python -m scripts.build_public_pages --out /var/www/trendearly/public_tmp --date $(date +%Y-%m-%d)
+```
+
+**Deploy Public Pages (Atomic Swap):**
+```bash
+python -m scripts.deploy_public_pages \
+  --source /var/www/trendearly/public_tmp \
+  --target /var/www/trendearly/public \
+  --user www-data \
+  --group www-data
+```
+
+**Note**: Public pages contain only Google Trends data - no TikTok-specific details are exposed.
+
+**Automatic Deployment (Optional):**
+
+To automatically deploy after generation, add to cron job:
+```bash
+# After daily pipeline completes, deploy public pages
+0 2 * * * cd /path/to/backend && /path/to/venv/bin/python -m scripts.deploy_public_pages --source /var/www/trendearly/public_tmp --target /var/www/trendearly/public --user www-data --group www-data
+```
+
+Or integrate into the daily pipeline script (already done - pages are generated to temp dir).
+
+### 9. Set Up Daily Backups
 
 **Create DigitalOcean Spaces bucket:**
 

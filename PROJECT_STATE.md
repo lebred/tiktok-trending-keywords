@@ -112,6 +112,7 @@ TikTok Keyword Momentum Tracker - MVP web application that identifies newly emer
 - **Scheduler**: APScheduler with BackgroundScheduler
 - **Error Handling**: ✅ Graceful degradation, partial failure handling
 - **Features**: Complete pipeline orchestration, logging, monitoring
+- **Public Pages**: ✅ Static HTML generation integrated into daily pipeline
 
 ## Repository Structure
 

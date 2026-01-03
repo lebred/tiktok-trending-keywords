@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     # Frontend URL (for magic links)
     frontend_url: str = "http://localhost:3000"
 
+    # Public pages directory
+    public_pages_dir: str = "./public_generated"
+
     class Config:
         env_file = ".env"
         case_sensitive = False

@@ -157,6 +157,53 @@ class DailyPipeline:
                 f"{len(results['errors'])} errors"
             )
 
+            # Step 5: Generate static public pages
+            logger.info("Step 5: Generating static public pages")
+            try:
+                from app.config import settings
+
+                # Build public pages
+                public_pages_dir = getattr(settings, "public_pages_dir", "./public_generated")
+                temp_dir = f"{public_pages_dir}_tmp"
+
+                # Generate to temp directory
+                # Script is in backend/scripts/, we're in backend/src/app/services/
+                # So go up 4 levels: services -> app -> src -> backend
+                backend_dir = Path(__file__).parent.parent.parent.parent
+                script_path = backend_dir / "scripts" / "build_public_pages.py"
+
+                cmd = [
+                    sys.executable,
+                    "-m",
+                    "scripts.build_public_pages",
+                    "--out", temp_dir,
+                    "--date", snapshot_date.isoformat(),
+                ]
+
+                logger.info(f"Running: {' '.join(cmd)}")
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    cwd=str(backend_dir),
+                )
+
+                if result.returncode == 0:
+                    logger.info("Public pages generated successfully")
+                    results["public_pages_generated"] = True
+                    results["public_pages_dir"] = temp_dir
+                else:
+                    error_msg = f"Failed to generate public pages: {result.stderr}"
+                    logger.error(error_msg)
+                    results["errors"].append(error_msg)
+                    results["public_pages_generated"] = False
+
+            except Exception as e:
+                error_msg = f"Error generating public pages: {e}"
+                logger.error(error_msg, exc_info=True)
+                results["errors"].append(error_msg)
+                results["public_pages_generated"] = False
+
             return results
 
         except Exception as e:
