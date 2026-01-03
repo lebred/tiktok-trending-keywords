@@ -177,13 +177,17 @@ server {
     listen 80;
     server_name trendearly.xyz;
 
-    # Frontend
+    # Frontend - static files
+    root /home/tiktok/tiktok-trending-keywords/frontend/out;
+    index index.html;
     location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        try_files $uri $uri/ $uri.html /index.html;
+    }
+
+    # Cache static assets
+    location /_next/static {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
     }
 
     # Backend API
@@ -264,8 +268,10 @@ python -m scripts.run_daily_pipeline --max-keywords 5
 # Backend logs
 sudo journalctl -u tiktok-backend -f
 
-# Frontend logs
-sudo journalctl -u tiktok-frontend -f
+# Frontend is static - no logs needed (served by Nginx)
+# Check Nginx logs if needed:
+sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log
 
 # Pipeline logs (if using cron)
 tail -f /var/log/tiktok-pipeline.log

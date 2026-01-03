@@ -1,25 +1,39 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { api, KeywordListResponse } from '@/lib/api'
 import KeywordList from '@/components/KeywordList'
 
-async function getKeywords(): Promise<KeywordListResponse> {
-  try {
-    // For free users, limit to top 10
-    return await api.getKeywords(1, 10, 10)
-  } catch (error) {
-    console.error('Error fetching keywords:', error)
-    return {
-      items: [],
-      total: 0,
-      page: 1,
-      page_size: 10,
-      has_next: false,
-      has_prev: false,
-    }
-  }
-}
+export default function Home() {
+  const [data, setData] = useState<KeywordListResponse>({
+    items: [],
+    total: 0,
+    page: 1,
+    page_size: 10,
+    has_next: false,
+    has_prev: false,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function Home() {
-  const data = await getKeywords()
+  useEffect(() => {
+    async function fetchKeywords() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        // For free users, limit to top 10
+        const result = await api.getKeywords(1, 10, 10);
+        setData(result);
+      } catch (err) {
+        console.error('Error fetching keywords:', err);
+        setError('Failed to load keywords');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchKeywords();
+  }, []);
 
   return (
     <main className="min-h-screen py-8">
@@ -43,9 +57,15 @@ export default async function Home() {
             </p>
           </div>
 
-          <KeywordList keywords={data.items} />
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-red-800">{error}</p>
+            </div>
+          )}
 
-          {data.items.length > 0 && (
+          <KeywordList keywords={data.items} isLoading={isLoading} />
+
+          {data.items.length > 0 && !isLoading && (
             <div className="mt-6 text-center text-sm text-gray-500">
               Showing {data.items.length} of {data.total} keywords
             </div>

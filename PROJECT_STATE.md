@@ -73,12 +73,15 @@ TikTok Keyword Momentum Tracker - MVP web application that identifies newly emer
 
 ### Website
 
-- **Status**: ✅ Core Pages Implemented
+- **Status**: ✅ Core Pages Implemented (Fully Static)
+- **Deployment**: Static export - no Node.js server required
 - **Pages**:
-  - ✅ Homepage - Keyword list with rankings
-  - ✅ Archive - Historical snapshots with date picker
-  - ✅ Keyword Detail - Score breakdown and history
+  - ✅ Homepage - Keyword list with rankings (client-side data fetching)
+  - ✅ Archive - Historical snapshots with date picker (client-side)
+  - ✅ Keyword Detail - Score breakdown and history (client-side)
 - **Features**: API integration, loading states, error handling, responsive design
+- **Build Output**: Static HTML/CSS/JS files in `out/` directory
+- **Serving**: Nginx or any static file server
 
 ### Authentication
 

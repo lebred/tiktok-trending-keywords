@@ -678,17 +678,21 @@
 ### Files Created
 
 #### API Client
+
 - `frontend/lib/api.ts` - API client utility
   - TypeScript interfaces for all API responses
   - Fetch wrapper with error handling
   - Methods for all backend endpoints
 
 #### Components
+
 - `frontend/components/Navigation.tsx` - Navigation bar component
+
   - Active route highlighting
   - Responsive design
 
 - `frontend/components/KeywordList.tsx` - Keyword list display component
+
   - Loading states with skeleton loaders
   - Empty state handling
   - Clickable cards linking to detail pages
@@ -700,12 +704,15 @@
   - Client-side component for interactivity
 
 #### Pages
+
 - `frontend/app/page.tsx` - Homepage (updated)
+
   - Server-side rendering
   - Top 10 keywords display
   - Free user limit (10 keywords)
 
 - `frontend/app/archive/page.tsx` - Archive page
+
   - Client-side date picker
   - Historical snapshot display
   - Pagination controls
@@ -717,30 +724,35 @@
   - Score breakdown and history
 
 #### Configuration
+
 - Updated `frontend/app/layout.tsx` - Added Navigation component
 - Updated `frontend/tsconfig.json` - Path aliases for components and lib
 
 ### Implementation Details
 
 #### Homepage
+
 - Displays top 10 keywords (free user limit)
 - Shows momentum scores prominently
 - Server-side rendered for SEO
 - Responsive grid layout
 
 #### Archive Page
+
 - Date picker with available dates
 - Historical snapshot viewing
 - Pagination for large datasets
 - Client-side interactivity
 
 #### Keyword Detail Page
+
 - Score breakdown visualization
 - Metric explanations
 - History timeline
 - Responsive design
 
 #### Features
+
 - **Server-Side Rendering**: Homepage and detail pages use SSR
 - **Client Components**: Interactive elements use client components
 - **Error Handling**: Try-catch blocks and error states
@@ -749,6 +761,7 @@
 - **TypeScript**: Full type safety with API interfaces
 
 ### Implementation Status
+
 - **Phase 8: Frontend Pages** - ✅ Completed
 - ✅ Homepage with keyword list
 - ✅ Archive page with date picker
@@ -758,15 +771,18 @@
 - ✅ Responsive design with Tailwind CSS
 
 ### Next Steps
+
 1. Begin Phase 9: Authentication and Stripe
 2. Implement email magic link authentication
 3. Implement Stripe subscription flow
 4. Add protected routes and paywall
 
 ### Open Questions
+
 - None at this time
 
 ### Notes
+
 - Frontend is fully functional and integrated with backend API
 - All pages are responsive and user-friendly
 - TypeScript provides type safety throughout
@@ -782,6 +798,7 @@
 ### Files Created
 
 #### Authentication Utilities
+
 - `backend/src/app/utils/auth.py` - JWT token utilities
   - create_access_token - Generate JWT access tokens
   - create_magic_link_token - Generate magic link tokens
@@ -790,7 +807,9 @@
   - get_user_id_from_token - Extract user ID from token
 
 #### Services
+
 - `backend/src/app/services/email_service.py` - Email sending service
+
   - send_magic_link - Send magic link emails via SMTP
   - HTML and plain text email templates
   - SMTP configuration support
@@ -802,13 +821,16 @@
   - is_paid_user - Check subscription status
 
 #### API Endpoints
+
 - `backend/src/app/api/auth.py` - Authentication endpoints
+
   - POST /api/auth/login - Request magic link
   - POST /api/auth/verify - Verify magic link token
   - GET /api/auth/me - Get current user info
   - POST /api/auth/logout - Logout endpoint
 
 - `backend/src/app/api/stripe.py` - Stripe integration endpoints
+
   - POST /api/stripe/create-checkout - Create checkout session
   - POST /api/stripe/webhook - Handle Stripe webhooks
   - GET /api/stripe/subscription-status - Get subscription status
@@ -819,6 +841,7 @@
   - get_paid_user - Paid subscription required
 
 #### Application Integration
+
 - Updated `backend/src/app/main.py` - Added auth and stripe routers
 - Updated `backend/src/app/api/keywords.py` - Added paid user protection
 - Updated `backend/src/app/api/archive.py` - Added authentication requirement
@@ -826,6 +849,7 @@
 ### Implementation Details
 
 #### Authentication Flow
+
 1. User requests magic link via POST /api/auth/login
 2. System generates JWT magic link token (15 min expiry)
 3. Email sent with magic link URL
@@ -834,12 +858,14 @@
 6. Frontend stores access token for authenticated requests
 
 #### Magic Link Security
+
 - 15-minute expiration for magic link tokens
 - JWT tokens signed with secret key
 - Email validation before sending
 - Token type verification (magic_link vs access_token)
 
 #### Stripe Integration
+
 - Checkout session creation for subscriptions
 - Webhook handling for subscription events:
   - checkout.session.completed - Subscription created
@@ -849,12 +875,14 @@
 - Subscription status tracking in database
 
 #### Protected Routes
+
 - `/api/keywords/full` - Requires paid subscription
 - `/api/archive/{date}` - Requires authentication
 - Dependency injection for authentication checks
 - Automatic user tier validation
 
 ### Implementation Status
+
 - **Phase 9: Authentication & Stripe** - ✅ Completed
 - ✅ Email magic link authentication implemented
 - ✅ JWT token generation and validation
@@ -865,15 +893,18 @@
 - ✅ Protected routes with authentication middleware
 
 ### Next Steps
+
 1. Final documentation pass
 2. Deployment preparation
 3. Environment configuration
 4. Testing and validation
 
 ### Open Questions
+
 - None at this time
 
 ### Notes
+
 - Authentication is fully functional with magic links
 - Stripe integration ready for production (requires API keys)
 - All protected routes properly secured
@@ -890,26 +921,31 @@
 ### Changes Made
 
 #### Database Configuration
+
 - Updated `backend/src/app/config.py` - Made database_url optional with SQLite default
 - Updated `backend/src/app/database.py` - Added SQLite support with foreign key pragma
 - Updated `backend/alembic/env.py` - Added SQLite-specific migration configuration
 
 #### Scripts
+
 - `backend/scripts/backup_sqlite.py` - SQLite backup script with Spaces upload
 - `backend/scripts/migrate_from_sqlite_to_postgres.py` - Migration script for later
 
 #### Documentation
+
 - `MVP_DEPLOYMENT.md` - Complete MVP deployment guide
 - Updated `DEPLOYMENT.md` - Added SQLite option and cost comparison
 - Updated `QUICK_START.md` - Added SQLite setup instructions
 - Updated `README.md` - Updated prerequisites
 
 #### Configuration
+
 - Updated `backend/.env.example` - Added SQLite as default option
 
 ### Implementation Details
 
 #### SQLite Support
+
 - **Default Database**: SQLite (sqlite:///./data.db)
 - **Foreign Keys**: Enabled via PRAGMA
 - **Thread Safety**: check_same_thread=False for FastAPI
@@ -917,12 +953,14 @@
 - **JSON Support**: SQLAlchemy handles JSON as TEXT in SQLite
 
 #### Backup Strategy
+
 - Daily automated backups to DigitalOcean Spaces
 - Simple file copy operation
 - Optional upload to Spaces for off-server storage
 - Retention management
 
 #### Migration Path
+
 - Script provided to migrate from SQLite to PostgreSQL
 - No code changes needed
 - Data preserved during migration
@@ -930,11 +968,13 @@
 ### Cost Comparison
 
 **MVP Setup (SQLite):**
+
 - Droplet: $12/month
 - Spaces: $5/month
 - **Total: $17/month**
 
 **Production Setup (PostgreSQL):**
+
 - App Platform: $12/month
 - Managed PostgreSQL: $15/month
 - **Total: $27/month minimum**
@@ -942,6 +982,7 @@
 **Savings: $10/month = $120/year**
 
 ### Implementation Status
+
 - **SQLite Support** - ✅ Completed
 - ✅ Database configuration updated
 - ✅ Alembic configured for SQLite
@@ -951,6 +992,7 @@
 - ✅ All documentation updated
 
 ### Notes
+
 - SQLite is perfect for MVP (single server, daily batch processing)
 - Easy migration path to PostgreSQL when needed
 - Zero database costs for MVP
@@ -967,7 +1009,9 @@
 ### Files Created
 
 #### Documentation
+
 - `DEPLOYMENT.md` - Complete deployment guide
+
   - Step-by-step instructions for DigitalOcean
   - App Platform and Droplet deployment options
   - Database setup and configuration
@@ -978,6 +1022,7 @@
   - Troubleshooting guide
 
 - `DEPLOYMENT_CHECKLIST.md` - Deployment checklist
+
   - Pre-deployment tasks
   - Step-by-step verification
   - Testing procedures
@@ -992,6 +1037,7 @@
   - Common issues
 
 #### Deployment Files
+
 - `backend/Dockerfile` - Docker container for backend
 - `backend/.dockerignore` - Docker ignore patterns
 - `frontend/Dockerfile` - Docker container for frontend
@@ -999,9 +1045,11 @@
 - `.github/workflows/deploy.yml` - GitHub Actions deployment workflow
 
 #### Scripts
+
 - `backend/scripts/migrate.py` - Database migration script
 
 #### Configuration Updates
+
 - Updated `backend/src/app/config.py` - Added frontend_url setting
 - Updated `frontend/next.config.js` - Added standalone output for Docker
 - Updated `README.md` - Added deployment references
@@ -1011,6 +1059,7 @@
 #### Deployment Options
 
 **Option 1: DigitalOcean App Platform (Recommended)**
+
 - Fully managed platform
 - Automatic SSL
 - Built-in logging
@@ -1018,34 +1067,40 @@
 - Cost: ~$20-72/month
 
 **Option 2: DigitalOcean Droplet (Manual)**
+
 - More control
 - Lower cost
 - Requires manual setup
 - Cost: ~$39/month
 
 **Option 3: Hybrid**
+
 - Backend on App Platform
 - Frontend on Vercel (optimized for Next.js)
 
 #### Key Deployment Steps
 
 1. **Database Setup**
+
    - Create managed PostgreSQL
    - Configure SSL connections
    - Run migrations
 
 2. **Backend Deployment**
+
    - Configure build and run commands
    - Set environment variables
    - Enable health checks
    - Verify scheduler starts
 
 3. **Frontend Deployment**
+
    - Configure build process
    - Set API URL
    - Enable standalone output
 
 4. **Stripe Configuration**
+
    - Set up webhook endpoint
    - Configure events
    - Test webhook processing
@@ -1055,6 +1110,7 @@
    - Certbot on Droplet
 
 ### Implementation Status
+
 - **Deployment Documentation** - ✅ Completed
 - ✅ Complete deployment guide created
 - ✅ Deployment checklist created
@@ -1065,15 +1121,109 @@
 - ✅ Configuration updates
 
 ### Next Steps
+
 1. Follow DEPLOYMENT.md step-by-step
 2. Use DEPLOYMENT_CHECKLIST.md to verify each step
 3. Test deployment in staging environment first
 4. Monitor first production run
 
 ### Notes
+
 - All deployment documentation is complete
 - Multiple deployment options provided
 - Security best practices included
 - Troubleshooting guides available
 - Ready for production deployment
+
+---
+
+## Session: Convert Frontend to Static Export
+
+**Date**: [Current Date]
+**Goal**: Convert Next.js frontend to fully static export for Nginx serving (no Node.js server)
+
+### Files Modified
+
+#### Configuration
+
+- `frontend/next.config.js` - Updated for static export
+
+  - Changed `output: 'standalone'` to `output: 'export'`
+  - Added `trailingSlash: true` for proper routing
+  - Added `images.unoptimized: true` (required for static export)
+
+- `frontend/package.json` - Removed production start script
+  - Removed `"start": "next start"` (not needed for static export)
+  - Build script remains: `"build": "next build"` produces `out/` directory
+
+#### Pages Converted to Client-Side
+
+- `frontend/app/page.tsx` - Homepage
+
+  - **Before**: Server component with async data fetching
+  - **After**: Client component (`'use client'`) with `useEffect` and `useState`
+  - Data fetched client-side on mount
+  - Added loading and error states
+
+- `frontend/app/keywords/[id]/page.tsx` - Keyword detail page
+  - **Before**: Server component with async data fetching
+  - **After**: Client component using `useParams()` and `useRouter()`
+  - Data fetched client-side based on route parameter
+  - Added loading, error, and not-found states
+
+#### Documentation
+
+- `frontend/STATIC_EXPORT.md` - New documentation file
+  - Explains static export configuration
+  - Deployment instructions for Nginx
+  - Build process documentation
+
+### Implementation Details
+
+#### Static Export Configuration
+
+- **Output**: `out/` directory with static HTML/CSS/JS
+- **Routing**: Client-side routing with trailing slashes
+- **Data Fetching**: All API calls happen in browser
+- **No Server**: Zero Node.js runtime required in production
+
+#### Client-Side Data Fetching
+
+- All pages use `useEffect` hooks to fetch data
+- API client (`lib/api.ts`) unchanged - already client-compatible
+- Loading states added for better UX
+- Error handling implemented
+
+#### Dynamic Routes
+
+- `/keywords/[id]` route works client-side
+- Uses `useParams()` to get route parameter
+- Fetches data based on ID from URL
+- Handles invalid IDs gracefully
+
+### Files Touched
+
+1. `frontend/next.config.js` - Static export configuration
+2. `frontend/package.json` - Removed start script
+3. `frontend/app/page.tsx` - Converted to client component
+4. `frontend/app/keywords/[id]/page.tsx` - Converted to client component
+5. `frontend/STATIC_EXPORT.md` - New documentation
+6. `PROJECT_STATE.md` - Updated website status
+
+### Verification
+
+- ✅ No server actions found
+- ✅ No `getServerSideProps` or `getStaticProps` used
+- ✅ No database access in frontend
+- ✅ All data fetching via HTTP API calls
+- ✅ Build produces static files in `out/` directory
+- ✅ No Node.js server required in production
+
+### Notes
+
+- Frontend is now fully static and can be served by Nginx
+- All runtime data fetched client-side from FastAPI backend
+- No code changes needed for API client (already client-compatible)
+- Archive page was already client-side, no changes needed
+- Layout uses metadata export (processed at build time, compatible with static export)
 - Management script allows testing without running full application

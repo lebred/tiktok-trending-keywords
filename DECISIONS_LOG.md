@@ -256,3 +256,52 @@
 - Clarified "no code changes" to "no schema changes" (more accurate)
 
 ---
+
+### Decision: Static Frontend Export
+
+**Date**: [Current Date]
+**Context**: Simplifying production deployment by eliminating Node.js server requirement
+**Decision**:
+
+- Convert Next.js frontend to fully static export
+- Remove Node.js server dependency in production
+- Serve static files directly via Nginx
+- All data fetching happens client-side from FastAPI backend
+
+**Rationale**:
+
+- **Simpler Deployment**: No need to run Node.js server, manage PM2/systemd, or handle Node.js process restarts
+- **Lower Resource Usage**: Static files require minimal server resources (just file serving)
+- **Better Performance**: Static files can be cached aggressively, served from CDN
+- **Easier Scaling**: Static files can be served from any web server or CDN
+- **Cost Effective**: No Node.js runtime overhead on Droplet
+- **Security**: Fewer moving parts, no Node.js vulnerabilities to patch
+- **Compatibility**: Works with any static file server (Nginx, Apache, CDN)
+
+**Implementation**:
+
+- Changed `next.config.js` to `output: 'export'`
+- Converted server components to client components
+- All data fetching moved to `useEffect` hooks
+- Build produces `out/` directory with static files
+- Removed `next start` script (not needed)
+
+**Trade-offs**:
+
+- **SEO**: Slightly reduced (no server-side rendering), but acceptable for MVP
+- **Initial Load**: Data fetched after page load (adds loading states)
+- **Dynamic Routes**: Must be handled client-side (acceptable for this use case)
+
+**Alternatives Considered**:
+
+- Keep Next.js server (rejected - adds complexity and resource usage)
+- Use Vercel/Netlify (rejected - want full control, using DigitalOcean)
+- Pre-render all pages (rejected - dynamic keyword IDs unknown at build time)
+
+**Migration Path**:
+
+- If SEO becomes critical, can add ISR (Incremental Static Regeneration) later
+- Can pre-render top keywords at build time if needed
+- Current approach is optimal for MVP scale
+
+---
