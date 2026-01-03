@@ -90,9 +90,15 @@ def get_keywords_with_snapshots(
             {
                 "id": keyword.id,
                 "keyword": keyword.keyword,
-                "keyword_type": keyword.keyword_type.value if keyword.keyword_type else "keyword",
-                "first_seen": keyword.first_seen.isoformat() if keyword.first_seen else None,
-                "last_seen": keyword.last_seen.isoformat() if keyword.last_seen else None,
+                "keyword_type": (
+                    keyword.keyword_type.value if keyword.keyword_type else "keyword"
+                ),
+                "first_seen": (
+                    keyword.first_seen.isoformat() if keyword.first_seen else None
+                ),
+                "last_seen": (
+                    keyword.last_seen.isoformat() if keyword.last_seen else None
+                ),
                 "snapshot": {
                     "date": snapshot.snapshot_date.isoformat(),
                     "momentum_score": snapshot.momentum_score,
@@ -401,17 +407,21 @@ def generate_index_page(keywords_data: List[Dict[str, Any]], output_dir: Path) -
             </a>
 """
 
-    html += """
+    html += (
+        """
         </div>
         
         <div class="footer">
             <p>Data source: Google Trends</p>
-            <p>Generated: """ + datetime.utcnow().isoformat() + """</p>
+            <p>Generated: """
+        + datetime.utcnow().isoformat()
+        + """</p>
         </div>
     </div>
 </body>
 </html>
 """
+    )
 
     # Write index file
     output_file = output_dir / "index.html"
@@ -421,7 +431,9 @@ def generate_index_page(keywords_data: List[Dict[str, Any]], output_dir: Path) -
 
 def main():
     """Main function to generate public pages."""
-    parser = argparse.ArgumentParser(description="Generate static public pages for keywords")
+    parser = argparse.ArgumentParser(
+        description="Generate static public pages for keywords"
+    )
     parser.add_argument(
         "--out",
         type=str,
@@ -478,7 +490,9 @@ def main():
         # Generate index page
         generate_index_page(keywords_data, output_path)
 
-        logger.info(f"Successfully generated {len(keywords_data)} keyword pages + index")
+        logger.info(
+            f"Successfully generated {len(keywords_data)} keyword pages + index"
+        )
 
     except Exception as e:
         logger.error(f"Error generating public pages: {e}", exc_info=True)
@@ -489,4 +503,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

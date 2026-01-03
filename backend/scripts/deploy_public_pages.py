@@ -122,9 +122,7 @@ def deploy_public_pages(
 
 def main():
     """Main deployment function."""
-    parser = argparse.ArgumentParser(
-        description="Deploy public pages with atomic swap"
-    )
+    parser = argparse.ArgumentParser(description="Deploy public pages with atomic swap")
     parser.add_argument(
         "--source",
         type=str,
@@ -175,4 +173,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

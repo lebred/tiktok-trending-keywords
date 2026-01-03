@@ -351,12 +351,14 @@
 **Date**: [Current Date]
 **Context**: Generate static public pages for keywords using only Google Trends data, integrated into daily automation
 **Decision**:
+
 - Generate static HTML pages after daily scoring completes
 - Use atomic swap deployment to avoid partial updates
 - Separate temp directory for generation, then swap to public directory
 - Public pages contain only Google Trends data (no TikTok details)
 
 **Rationale**:
+
 - **Public-Facing Content**: Enables SEO-friendly public pages without exposing TikTok data
 - **Atomic Deployment**: Prevents serving partial/corrupted pages during generation
 - **Automation**: Integrated into daily pipeline for automatic updates
@@ -364,6 +366,7 @@
 - **Performance**: Static HTML can be cached aggressively, served from CDN
 
 **Implementation**:
+
 - `build_public_pages.py` script generates HTML from database
 - Generates to temp directory first
 - `deploy_public_pages.py` performs atomic swap
@@ -371,6 +374,7 @@
 - Manual deployment step (or cron job)
 
 **Deployment Process**:
+
 1. Generate to temp directory (`public_tmp`)
 2. Backup current public directory (`public_prev`)
 3. Move temp to public (atomic swap)
@@ -378,16 +382,19 @@
 5. Set ownership and permissions
 
 **Trade-offs**:
+
 - **Manual Deployment**: Requires separate step or cron job (acceptable - can be automated)
 - **Storage**: Duplicate pages in temp and public (acceptable - small size)
 - **CDN**: Static files can be served from CDN (future optimization)
 
 **Alternatives Considered**:
+
 - Generate directly to public directory (rejected - risk of partial updates)
 - Use Next.js static export (rejected - want simple HTML, no build complexity)
 - Serve from database dynamically (rejected - want static files for performance/CDN)
 
 **Security**:
+
 - Public pages contain only Google Trends data
 - No TikTok-specific metrics exposed
 - No authentication required

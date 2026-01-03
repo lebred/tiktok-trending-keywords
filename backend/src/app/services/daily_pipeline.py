@@ -113,7 +113,9 @@ class DailyPipeline:
             logger.info(f"Processing {len(keywords_to_process)} keywords")
 
             # Step 4: Process each keyword (fetch trends, calculate score)
-            logger.info("Step 4: Processing keywords (fetching trends and calculating scores)")
+            logger.info(
+                "Step 4: Processing keywords (fetching trends and calculating scores)"
+            )
             for i, keyword in enumerate(keywords_to_process, 1):
                 try:
                     logger.info(
@@ -166,7 +168,9 @@ class DailyPipeline:
                 from app.config import settings
 
                 # Build public pages
-                public_pages_dir = getattr(settings, "public_pages_dir", "./public_generated")
+                public_pages_dir = getattr(
+                    settings, "public_pages_dir", "./public_generated"
+                )
                 temp_dir = f"{public_pages_dir}_tmp"
 
                 # Generate to temp directory
@@ -179,8 +183,10 @@ class DailyPipeline:
                     sys.executable,
                     "-m",
                     "scripts.build_public_pages",
-                    "--out", temp_dir,
-                    "--date", snapshot_date.isoformat(),
+                    "--out",
+                    temp_dir,
+                    "--date",
+                    snapshot_date.isoformat(),
                 ]
 
                 logger.info(f"Running: {' '.join(cmd)}")
@@ -251,4 +257,3 @@ def run_daily_pipeline(
     """
     pipeline = DailyPipeline()
     return pipeline.run_pipeline_sync(snapshot_date, max_keywords)
-

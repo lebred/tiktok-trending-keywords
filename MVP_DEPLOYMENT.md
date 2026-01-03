@@ -224,11 +224,13 @@ The daily pipeline automatically generates static public pages after scoring com
 **Configure Public Pages Directory:**
 
 Add to `.env`:
+
 ```bash
 PUBLIC_PAGES_DIR=/var/www/trendearly/public
 ```
 
 **Manual Generation (Optional):**
+
 ```bash
 cd backend
 source venv/bin/activate
@@ -236,6 +238,7 @@ python -m scripts.build_public_pages --out /var/www/trendearly/public_tmp --date
 ```
 
 **Deploy Public Pages (Atomic Swap):**
+
 ```bash
 python -m scripts.deploy_public_pages \
   --source /var/www/trendearly/public_tmp \
@@ -249,6 +252,7 @@ python -m scripts.deploy_public_pages \
 **Automatic Deployment (Optional):**
 
 To automatically deploy after generation, add to cron job:
+
 ```bash
 # After daily pipeline completes, deploy public pages
 0 2 * * * cd /path/to/backend && /path/to/venv/bin/python -m scripts.deploy_public_pages --source /var/www/trendearly/public_tmp --target /var/www/trendearly/public --user www-data --group www-data
